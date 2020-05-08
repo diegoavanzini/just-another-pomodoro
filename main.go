@@ -19,11 +19,18 @@ const title = "just another pomodoro"
 func main() {
 	pomodoro = app.New()
 	pomodoroWindows = pomodoro.NewWindow(title)
+
+	alert := make(chan bool)
+	go func(alert chan bool){
+		for {
+			<-alert
+			pomodoroWindows.RequestFocus()
+		}
+	}(alert)
 	pomodoroWindows.Resize(fyne.Size{420, 80})
 	winGrid := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
 
 	pause := make(chan bool)
-
 	buttonsContainer := createButtonContainer(pause)
 
 	progressBar, pauseProgressBar, progressBarContainer := createProgressBarContainer()
@@ -38,7 +45,7 @@ func main() {
 
 	go func(pDone *fyne.Container) {
 		for {
-			startTimerCycle(progressBar, pauseProgressBar, pause)
+			startTimerCycle(progressBar, pauseProgressBar, pause, alert)
 			AddPomodoro(pDone)
 		}
 	}(doneContainer)
@@ -48,9 +55,9 @@ func main() {
 }
 
 func createProgressBarContainer() (*CustomProgressBar, *CustomProgressBar, *fyne.Container) {
-	progressBar := NewTimerProgressBar(25 * time.Second)
+	progressBar := NewTimerProgressBar(25 * time.Minute)
 	progressBar.Resize(fyne.NewSize(250, 5))
-	pauseProgressBar := NewTimerProgressBar(5 * time.Second)
+	pauseProgressBar := NewTimerProgressBar(5 * time.Minute)
 	pauseProgressBar.Resize(fyne.NewSize(50, 5))
 	progressBarContainer := fyne.NewContainerWithLayout(NewResizableGridLayout(2), progressBar, pauseProgressBar)
 	return progressBar, pauseProgressBar, progressBarContainer
@@ -88,13 +95,13 @@ func AddPomodoro(c *fyne.Container) {
 	c.AddObject(label)
 }
 
-func startTimerCycle(progressBar *CustomProgressBar, pauseProgressBar *CustomProgressBar, pause chan bool) {
-	startTimer(progressBar, pause)
-	startTimer(pauseProgressBar, pause)
+func startTimerCycle(progressBar *CustomProgressBar, pauseProgressBar *CustomProgressBar, pause, alert chan bool) {
+	startTimer(progressBar, pause, alert)
+	startTimer(pauseProgressBar, pause, alert)
 	pauseProgressBar.SetValue(time.Duration(0))
 }
 
-func startTimer(bar *CustomProgressBar, pause chan bool) {
+func startTimer(bar *CustomProgressBar, pause, alert chan bool) {
 	ticker := time.NewTicker(1 * time.Second)
 	value := time.Duration(0)
 	func() {
@@ -106,6 +113,9 @@ func startTimer(bar *CustomProgressBar, pause chan bool) {
 			case <-ticker.C:
 				value += 1*time.Second
 				bar.SetValue(value)
+				if value/bar.Max * 100 > 95 {
+					alert <- true
+				}
 				if value >= bar.Max {
 					ticker.Stop()
 					return
