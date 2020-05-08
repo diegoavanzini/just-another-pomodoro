@@ -1,6 +1,6 @@
 Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyne.io/) toolkit
 
-####TODO
+### TODO
 - ~~gestire la pausa del pomodoro~~
 - ~~alert prima della fine della progress bar~~
 - add tests
