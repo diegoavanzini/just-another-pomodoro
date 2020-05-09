@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 	"image/color"
+	"math"
 	"time"
 )
 
@@ -21,27 +22,36 @@ func main() {
 	pomodoroWindows = pomodoro.NewWindow(title)
 
 	alert := make(chan bool)
-	go func(alert chan bool){
+	go func(alert chan bool) {
 		for {
 			<-alert
 			pomodoroWindows.RequestFocus()
 		}
 	}(alert)
-	pomodoroWindows.Resize(fyne.Size{420, 80})
+	pomodoroWindows.Resize(fyne.Size{420, 70})
 	winGrid := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
 
 	pause := make(chan bool)
 	buttonsContainer := createButtonContainer(pause)
+	progressBar, pauseProgressBar, progressBarContainer := createProgressBarContainer(pause, alert)
 
-	progressBar, pauseProgressBar, progressBarContainer := createProgressBarContainer()
+	doneContainer := fyne.NewContainerWithLayout(layout.NewHBoxLayout())
+	AddPomodoro(doneContainer)
+	dailyContainer := fyne.NewContainerWithLayout(
+		layout.NewVBoxLayout(),
+		canvas.NewRectangle(color.White),
+		doneContainer)
 
-	doneContainer := fyne.NewContainerWithLayout(NewResizableGridLayout(21))
-	doneContainer.Resize(fyne.Size{20, 300})
-	progressAndDoneContainer := fyne.NewContainerWithLayout(layout.NewVBoxLayout(), progressBarContainer, doneContainer)
+	progressAndDoneContainer := fyne.NewContainerWithLayout(
+		layout.NewVBoxLayout(),
+		progressBarContainer,
+		dailyContainer)
 	progressAndDoneContainer.Resize(fyne.Size{310, 50})
 
-	timerContainer := fyne.NewContainerWithLayout(NewResizableGridLayout(2), progressAndDoneContainer, buttonsContainer)
-	winGrid.AddObject(timerContainer)
+	timerContainer := fyne.NewContainerWithLayout(
+		NewResizableGridLayout(2),
+		progressAndDoneContainer,
+		buttonsContainer)
 
 	go func(pDone *fyne.Container) {
 		for {
@@ -49,15 +59,16 @@ func main() {
 			AddPomodoro(pDone)
 		}
 	}(doneContainer)
+	winGrid.AddObject(timerContainer)
 
 	pomodoroWindows.SetContent(winGrid)
 	pomodoroWindows.ShowAndRun()
 }
 
-func createProgressBarContainer() (*CustomProgressBar, *CustomProgressBar, *fyne.Container) {
-	progressBar := NewTimerProgressBar(25 * time.Minute)
+func createProgressBarContainer(pause, alert chan bool) (*CustomProgressBar, *CustomProgressBar, *fyne.Container) {
+	progressBar := NewTimerProgressBar(25*time.Minute, pause, alert)
 	progressBar.Resize(fyne.NewSize(250, 5))
-	pauseProgressBar := NewTimerProgressBar(5 * time.Minute)
+	pauseProgressBar := NewTimerProgressBar(5*time.Minute, pause, alert)
 	pauseProgressBar.Resize(fyne.NewSize(50, 5))
 	progressBarContainer := fyne.NewContainerWithLayout(NewResizableGridLayout(2), progressBar, pauseProgressBar)
 	return progressBar, pauseProgressBar, progressBarContainer
@@ -66,7 +77,11 @@ func createProgressBarContainer() (*CustomProgressBar, *CustomProgressBar, *fyne
 func createButtonContainer(pause chan bool) *fyne.Container {
 	var pauseFocusButton *widget.Button
 	pauseFocusButton = widget.NewButton("||", func() {
-		pomodoroWindows.SetTitle(title + " (paused)")
+		if pomodoroWindows.Title() == title {
+			pomodoroWindows.SetTitle(title + " (paused)")
+		} else {
+			pomodoroWindows.SetTitle(title)
+		}
 		pause <- true
 	})
 	pauseFocusButton.Resize(fyne.NewSize(30, 30))
@@ -81,46 +96,31 @@ func createButtonContainer(pause chan bool) *fyne.Container {
 }
 
 func AddPomodoro(c *fyne.Container) {
-	circle := canvas.NewCircle(color.RGBA{R: 11, G: 156, B: 49, A: 1})
-	circle.Resize(fyne.Size{Width: 10, Height: 10})
-	circle.Show()
-	if len(c.Objects) < 20 {
-		c.AddObject(circle)
+	totalMinutes := time.Now().Hour() * 60 + time.Now().Minute()
+	numberOfPresentPomodoro := int(math.Floor(float64(totalMinutes / (25 + 5))))
+	if len(c.Objects) == numberOfPresentPomodoro + 1 {
 		return
 	}
-	newList := c.Objects[1 : len(c.Objects)-1]
-	c.Objects = newList
-	c.AddObject(circle)
-	label := widget.NewLabel("...")
-	c.AddObject(label)
+	if len(c.Objects) == 0 {
+		for i := 0; i < numberOfPresentPomodoro; i++ {
+			pomodoro := createPomodoro(5)
+			pomodoro.Hide()
+			c.AddObject(pomodoro)
+		}
+	}
+	pomodoro := createPomodoro(5)
+	pomodoro.Show()
+	c.AddObject(pomodoro)
+}
+
+func createPomodoro(size int) *canvas.Rectangle {
+	pomodoro := canvas.NewRectangle(color.RGBA{R: 11, G: 156, B: 49, A: 1})
+	pomodoro.SetMinSize(fyne.Size{Width: size, Height: 20})
+	return pomodoro
 }
 
 func startTimerCycle(progressBar *CustomProgressBar, pauseProgressBar *CustomProgressBar, pause, alert chan bool) {
-	startTimer(progressBar, pause, alert)
-	startTimer(pauseProgressBar, pause, alert)
+	progressBar.Start()
+	pauseProgressBar.Start()
 	pauseProgressBar.SetValue(time.Duration(0))
-}
-
-func startTimer(bar *CustomProgressBar, pause, alert chan bool) {
-	ticker := time.NewTicker(1 * time.Second)
-	value := time.Duration(0)
-	func() {
-		for {
-			select {
-			case <-pause:
-				<-pause
-				pomodoroWindows.SetTitle(title)
-			case <-ticker.C:
-				value += 1*time.Second
-				bar.SetValue(value)
-				if value/bar.Max * 100 > 95 {
-					alert <- true
-				}
-				if value >= bar.Max {
-					ticker.Stop()
-					return
-				}
-			}
-		}
-	}()
 }

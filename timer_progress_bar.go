@@ -10,18 +10,43 @@ import (
 	"time"
 )
 
-const defaultText = "%t"
-
 type CustomProgressBar struct {
 	*widget.ProgressBar
 	Min, Max, Value time.Duration
+	pause, alert chan bool
 }
 
-func NewTimerProgressBar(maxDuration time.Duration) *CustomProgressBar {
+
+func (bar *CustomProgressBar) Start() {
+	ticker := time.NewTicker(1 * time.Second)
+	value := time.Duration(0)
+	func() {
+		for {
+			select {
+			case <-bar.pause:
+				<-bar.pause
+			case <-ticker.C:
+				value += 1*time.Second
+				bar.SetValue(value)
+				if value/bar.Max * 100 > 90 {
+					bar.alert <- true
+				}
+				if value >= bar.Max {
+					ticker.Stop()
+					return
+				}
+			}
+		}
+	}()
+}
+
+func NewTimerProgressBar(maxDuration time.Duration,pause, alert chan bool) *CustomProgressBar {
 	p := &CustomProgressBar{
 		ProgressBar: widget.NewProgressBar(),
+		Max:         maxDuration,
+		pause:       pause,
+		alert:       alert,
 	}
-	p.Max = maxDuration
 	widget.Renderer(p).Layout(p.MinSize())
 	return p
 }

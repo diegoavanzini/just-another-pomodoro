@@ -3,7 +3,8 @@ Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyn
 ### TODO
 - ~~gestire la pausa del pomodoro~~
 - ~~alert prima della fine della progress bar~~
-- add tests
+- ~~add tests~~
+- ~~position of tomatoes done at the correct hour~~ 
 - implement settings windows:
     1. set timer duration 
     2. set break timer duration
