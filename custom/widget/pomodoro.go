@@ -1,4 +1,4 @@
-package domain
+package widget
 
 import (
 	"fyne.io/fyne"

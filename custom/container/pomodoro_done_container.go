@@ -1,7 +1,7 @@
 package container
 
 import (
-	"bitbucket.org/avanz/anotherPomodoro/domain"
+	"bitbucket.org/avanz/anotherPomodoro/custom/widget"
 	"fyne.io/fyne"
 	"math"
 	"time"
