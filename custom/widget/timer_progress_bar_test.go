@@ -1,4 +1,4 @@
-package main
+package widget
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 func TestProgressBar_SetValue(t *testing.T) {
 	pause := make(chan bool)
 	alert := make(chan bool)
-	bar := NewTimerProgressBar(10 * time.Second, pause, alert)
+	bar := NewTimerProgressBar(10*time.Second, pause, alert)
 
 	assert.Equal(t, time.Duration(0), bar.Min)
 	assert.Equal(t, 10*time.Second, bar.Max)
@@ -24,7 +24,7 @@ func TestProgressBar_SetValue(t *testing.T) {
 func TestProgressBar_StartTimer(t *testing.T) {
 	pause := make(chan bool)
 	alert := make(chan bool)
-	bar := NewTimerProgressBar(5 * time.Second,pause, alert)
+	bar := NewTimerProgressBar(5*time.Second, pause, alert)
 
 	assert.Equal(t, time.Duration(0), bar.Min)
 	assert.Equal(t, 5*time.Second, bar.Max)
@@ -35,6 +35,5 @@ func TestProgressBar_StartTimer(t *testing.T) {
 
 	assert.True(t, a)
 	assert.True(t, bar.Value > time.Duration(0))
-
 
 }

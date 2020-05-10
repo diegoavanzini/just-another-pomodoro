@@ -1,4 +1,4 @@
-package main
+package layout
 
 import (
 	"fyne.io/fyne"
@@ -31,14 +31,13 @@ func (g *customGridLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	//padWidth := (g.Cols - 1) * theme.Padding()
 	//padHeight := (rows - 1) * theme.Padding()
 
-
 	row, col := 0, 0
-	var prevX1,prevY1 float64
+	var prevX1, prevY1 float64
 	for i, child := range objects {
 		//cellWidth := float64(child.Size().Width-padWidth)
 		//cellHeight := float64(child.Size().Height-padHeight)
 		x1 := getLeading(prevX1)
-		y1 := (getLeading(prevY1) + child.Size().Height) * row + 1
+		y1 := (getLeading(prevY1)+child.Size().Height)*row + 1
 		prevX1 += float64(child.Size().Width + theme.Padding())
 		//prevY1 = float64(child.Size().Height+padHeight)
 		//x2 := getTrailing(cellWidth, col)

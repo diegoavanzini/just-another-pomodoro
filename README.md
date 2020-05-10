@@ -11,6 +11,8 @@ Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyn
     3. continuous pomodoro
     4. stop at every pomodoro
     5. insert comment on every pomodoro
+- sync tomato with remote pair
+- sync tomato with github commit
 ---
 ![alt text](img/jap2020-05-0817-15-27.png "screenshot")
 

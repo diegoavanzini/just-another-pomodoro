@@ -1,4 +1,4 @@
-package main
+package widget
 
 import (
 	"fmt"
@@ -13,9 +13,8 @@ import (
 type CustomProgressBar struct {
 	*widget.ProgressBar
 	Min, Max, Value time.Duration
-	pause, alert chan bool
+	pause, alert    chan bool
 }
-
 
 func (bar *CustomProgressBar) Start() {
 	ticker := time.NewTicker(1 * time.Second)
@@ -23,12 +22,14 @@ func (bar *CustomProgressBar) Start() {
 	func() {
 		for {
 			select {
-			case <-bar.pause:
-				<-bar.pause
+			case p:=<-bar.pause:
+				if p {
+					<-bar.pause
+				}
 			case <-ticker.C:
-				value += 1*time.Second
+				value += 1 * time.Second
 				bar.SetValue(value)
-				if value/bar.Max * 100 > 90 {
+				if value/bar.Max*100 > 90 {
 					bar.alert <- true
 				}
 				if value >= bar.Max {
@@ -40,7 +41,7 @@ func (bar *CustomProgressBar) Start() {
 	}()
 }
 
-func NewTimerProgressBar(maxDuration time.Duration,pause, alert chan bool) *CustomProgressBar {
+func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool) *CustomProgressBar {
 	p := &CustomProgressBar{
 		ProgressBar: widget.NewProgressBar(),
 		Max:         maxDuration,
