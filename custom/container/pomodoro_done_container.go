@@ -26,12 +26,12 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 	}
 	if len(c.Container.Objects) == 0 {
 		for i := 0; i < numberOfPresentPomodoro; i++ {
-			pomodoro := domain.NewPomodoro(5)
+			pomodoro := widget.NewPomodoro(5)
 			pomodoro.Hide()
 			c.Container.AddObject(pomodoro)
 		}
 	}
-	pomodoro := domain.NewPomodoro(5)
+	pomodoro := widget.NewPomodoro(5)
 	pomodoro.Show()
 	c.Container.AddObject(pomodoro)
 }
