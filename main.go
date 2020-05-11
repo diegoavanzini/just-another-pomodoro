@@ -8,12 +8,18 @@ import (
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
 	"image/color"
+	"os"
 )
 
 const title = "just another pomodoro"
 
 func main() {
 	pomodoro := app.New()
+	logo, err := fyne.LoadResourceFromPath("img"+string(os.PathSeparator)+"jap_logo.png")
+	if err != nil {
+		panic(err)
+	}
+	pomodoro.SetIcon(logo)
 	pomodoroWindows := pomodoro.NewWindow(title)
 
 	pause := make(chan bool, 2)
