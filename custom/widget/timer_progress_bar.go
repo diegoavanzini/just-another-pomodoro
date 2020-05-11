@@ -22,7 +22,7 @@ func (bar *CustomProgressBar) Start() {
 	func() {
 		for {
 			select {
-			case p:=<-bar.pause:
+			case p := <-bar.pause:
 				if p {
 					<-bar.pause
 				}

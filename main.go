@@ -15,7 +15,7 @@ const title = "just another pomodoro"
 
 func main() {
 	pomodoro := app.New()
-	logo, err := fyne.LoadResourceFromPath("img"+string(os.PathSeparator)+"jap_logo.png")
+	logo, err := fyne.LoadResourceFromPath("img" + string(os.PathSeparator) + "jap_logo.png")
 	if err != nil {
 		panic(err)
 	}
