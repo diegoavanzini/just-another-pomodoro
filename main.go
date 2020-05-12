@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/layout"
 	"github.com/nanobox-io/golang-scribble"
 	"image/color"
+	"os"
 )
 
 const title = "just another pomodoro"
@@ -18,6 +19,11 @@ func main() {
 	initStorage()
 
 	pomodoroApp := app.New()
+	logo, err := fyne.LoadResourceFromPath("img" + string(os.PathSeparator) + "jap_logo.png")
+	if err != nil {
+		panic(err)
+	}
+	pomodoroApp.SetIcon(logo)
 	pomodoroWindows := pomodoroApp.NewWindow(title)
 
 	pause := make(chan bool, 2)
