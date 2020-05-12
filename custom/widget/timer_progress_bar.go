@@ -1,7 +1,7 @@
 package widget
 
 import (
-	"fmt"
+	"bitbucket.org/avanz/anotherPomodoro/common"
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/theme"
@@ -66,7 +66,7 @@ func (p *CustomProgressBar) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	bar := canvas.NewRectangle(theme.PrimaryColor())
-	label := canvas.NewText(fmtDuration(time.Duration(0)), theme.TextColor())
+	label := canvas.NewText(common.DurationToString(time.Duration(0)), theme.TextColor())
 	label.Alignment = fyne.TextAlignCenter
 	return &customProgressBarRenderer{[]fyne.CanvasObject{bar, label}, bar, label, p}
 }
@@ -107,20 +107,13 @@ func (p *customProgressBarRenderer) updateBar() {
 	delta := float32(p.progress.Max - p.progress.Min)
 	ratio := float32(p.progress.Value-p.progress.Min) / float32(delta)
 
-	p.label.Text = fmtDuration(p.progress.Value)
+	p.label.Text = common.DurationToString(p.progress.Value)
 
 	size := p.progress.Size()
 	//width := int(p.progress.Value.Seconds() / p.progress.Max.Seconds())
 	p.bar.Resize(fyne.NewSize(int(float32(size.Width)*ratio), size.Height))
 }
 
-func fmtDuration(d time.Duration) string {
-	d = d.Round(time.Second)
-	h := d / time.Minute
-	d -= h * time.Minute
-	m := d / time.Second
-	return fmt.Sprintf("%02d:%02d", h, m)
-}
 
 // Layout the components of the check widget
 func (p *customProgressBarRenderer) Layout(size fyne.Size) {
