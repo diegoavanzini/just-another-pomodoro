@@ -18,7 +18,7 @@ type CustomProgressBar struct {
 
 func (bar *CustomProgressBar) Start() {
 	ticker := time.NewTicker(1 * time.Second)
-	value := time.Duration(0)
+	value := bar.Max
 	func() {
 		for {
 			select {
@@ -27,12 +27,13 @@ func (bar *CustomProgressBar) Start() {
 					<-bar.pause
 				}
 			case <-ticker.C:
-				value += 1 * time.Second
+				value -= 1 * time.Second
 				bar.SetValue(value)
-				if value/bar.Max*100 > 90 {
-					bar.alert <- true
+				percentage := (value.Seconds() / bar.Max.Seconds()) * 100
+				if percentage < 10 {
+						bar.alert <- true
 				}
-				if value >= bar.Max {
+				if value <= bar.Min {
 					ticker.Stop()
 					return
 				}
@@ -47,7 +48,9 @@ func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool) *Cus
 		Max:         maxDuration,
 		pause:       pause,
 		alert:       alert,
+		Value: 		 maxDuration,
 	}
+	//p.SetValue(maxDuration)
 	widget.Renderer(p).Layout(p.MinSize())
 	return p
 }
@@ -65,8 +68,13 @@ func (p *CustomProgressBar) CreateRenderer() fyne.WidgetRenderer {
 		p.Max = time.Duration(25) * time.Minute
 	}
 
-	bar := canvas.NewRectangle(theme.PrimaryColor())
-	label := canvas.NewText(common.DurationToString(time.Duration(0)), theme.TextColor())
+	bar := canvas.NewRectangle(color.RGBA{
+		R: 238,
+		G: 238,
+		B: 0,
+		A: 1,
+	})
+	label := canvas.NewText(common.DurationToString(p.Max), theme.TextColor())
 	label.Alignment = fyne.TextAlignCenter
 	return &customProgressBarRenderer{[]fyne.CanvasObject{bar, label}, bar, label, p}
 }
@@ -83,7 +91,7 @@ type customProgressBarRenderer struct {
 // MinSize calculates the minimum size of a progress bar.
 // This is simply the "100%" label size plus padding.
 func (p *customProgressBarRenderer) MinSize() fyne.Size {
-	text := textMinSize("25:00", p.label.TextSize, p.label.TextStyle)
+	text := textMinSize(common.DurationToString(25*time.Minute), p.label.TextSize, p.label.TextStyle)
 
 	return fyne.NewSize(text.Width+theme.Padding()*4, text.Height+theme.Padding()*2)
 }
@@ -105,13 +113,13 @@ func (p *customProgressBarRenderer) updateBar() {
 
 	//ratio := p.progress.Value
 	delta := float32(p.progress.Max - p.progress.Min)
-	ratio := float32(p.progress.Value-p.progress.Min) / float32(delta)
+	ratio := float32(p.progress.Value-p.progress.Min) / delta
 
 	p.label.Text = common.DurationToString(p.progress.Value)
 
 	size := p.progress.Size()
 	//width := int(p.progress.Value.Seconds() / p.progress.Max.Seconds())
-	p.bar.Resize(fyne.NewSize(int(float32(size.Width)*ratio), size.Height))
+	p.bar.Resize(fyne.NewSize(int(float32(size.Width) - float32(size.Width)*ratio), size.Height))
 }
 
 

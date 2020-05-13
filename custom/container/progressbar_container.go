@@ -21,7 +21,7 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool) ProgressBarCon
 			panic(err)
 		}
 	}
-	err = common.Settings.Read("settings", "pauseDuration", &timerDuration)
+	err = common.Settings.Read("settings", "pauseDuration", &pauseDuration)
 	if err != nil {
 		err = common.Settings.Write("settings", "pauseDuration", 5*time.Minute)
 		if err != nil {
@@ -38,7 +38,7 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool) ProgressBarCon
 		pauseProgressBar)
 	go func() {
 		for {
-			pauseProgressBar.SetValue(time.Duration(0))
+			pauseProgressBar.SetValue(pauseDuration)
 			progressBar.Start()
 			pauseProgressBar.Start()
 			addPomodoro <- true

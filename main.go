@@ -43,7 +43,7 @@ func main() {
 		}
 	}(pause, alert)
 
-	pomodoroWindows.Resize(fyne.Size{420, 70})
+	pomodoroWindows.Resize(fyne.Size{Width: 420, Height: 70})
 	winGrid := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
 
 	addPomodoro := make(chan bool)
