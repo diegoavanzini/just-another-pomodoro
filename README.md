@@ -6,8 +6,8 @@ Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyn
 - ~~add tests~~
 - ~~position of tomatoes done at the correct hour~~ 
 - implement settings windows:
-    1. set timer duration 
-    2. set break timer duration
+    1. ~~set timer duration~~ 
+    2. ~~set break timer duration~~
     3. continuous pomodoro
     4. stop at every pomodoro
     5. insert comment on every pomodoro
