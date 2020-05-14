@@ -30,7 +30,7 @@ func (bar *CustomProgressBar) Start() {
 				value -= 1 * time.Second
 				bar.SetValue(value)
 				percentage := (value.Seconds() / bar.Max.Seconds()) * 100
-				if percentage < 10 {
+				if percentage == 10 {
 						bar.alert <- true
 				}
 				if value <= bar.Min {
