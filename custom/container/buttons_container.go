@@ -5,6 +5,9 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
+	"github.com/gobuffalo/packr/v2"
+
+	"os"
 	"time"
 )
 
@@ -13,13 +16,27 @@ type ButtonContainer struct {
 }
 
 func NewButtonContainer(pause chan bool, mainApp fyne.App) ButtonContainer {
+	var err error
+	startBox := packr.New("start", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"start.png")
+	startIcon, err := fyne.LoadResourceFromPath(startBox.ResolutionDir)
+	if err != nil {
+		panic(err)
+	}
+	pauseBox := packr.New("pause", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"pause.png")
+	pauseIcon, err := fyne.LoadResourceFromPath(pauseBox.ResolutionDir)
+	if err != nil {
+		panic(err)
+	}
+	icons := map[bool]fyne.Resource{false:startIcon,true:pauseIcon}
 	var pauseFocusButton *widget.Button
 	toPause := true
-	pauseFocusButton = widget.NewButton("||", func() {
+	pauseFocusButton = widget.NewButton("", func() {
 		pause <- toPause
 		pause <- toPause
 		toPause = !toPause
+		pauseFocusButton.SetIcon(icons[toPause])
 	})
+	pauseFocusButton.SetIcon(icons[toPause])
 	pauseFocusButton.Resize(fyne.NewSize(30, 30))
 
 	settingsButton := widget.NewButton("Settings...", func() {
@@ -32,7 +49,9 @@ func NewButtonContainer(pause chan bool, mainApp fyne.App) ButtonContainer {
 		layout.NewVBoxLayout(),
 		pauseFocusButton,
 		settingsButton)
-	return ButtonContainer{Container: buttonsContainer}
+	return ButtonContainer{
+		Container: buttonsContainer,
+	}
 }
 
 func createSettingsWindows(pomodoroApp fyne.App) fyne.Window {
