@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/theme"
-	"image/color"
 	"math"
 	"time"
 )
@@ -38,15 +37,14 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 	if len(c.Container.Objects) == numberOfPresentPomodoro+1 {
 		return
 	}
-	green := color.RGBA{R: 11, G: 156, B: 49, A: 1}
+
 	if len(c.Container.Objects) == 0 {
 		for i := 0; i < numberOfPresentPomodoro; i++ {
 			pomodoro := widget.NewPomodoro(5, theme.BackgroundColor(), fmt.Sprintf("at %t", time.Now()))
-			//pomodoro.Hide()
 			c.Container.AddObject(pomodoro)
 		}
 	}
-	pomodoro := widget.NewPomodoro(5, green, fmt.Sprintf("at %t", time.Now()))
+	pomodoro := widget.NewPomodoro(5, common.Green, fmt.Sprintf("at %t", time.Now()))
 	pomodoro.Show()
 	c.Container.AddObject(pomodoro)
 }

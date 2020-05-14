@@ -35,18 +35,17 @@ func NewButtonContainer(pause chan bool, mainApp fyne.App) ButtonContainer {
 	return ButtonContainer{Container: buttonsContainer}
 }
 
-
 func createSettingsWindows(pomodoroApp fyne.App) fyne.Window {
 	settings := pomodoroApp.NewWindow("Settings")
 	settings.Resize(fyne.Size{300, 50})
 	settings.CenterOnScreen()
 
 	timeDurationEntry := widget.NewEntry()
-	initTimeDuration(timeDurationEntry, "timeDuration", 25 * time.Minute)
+	initTimeDuration(timeDurationEntry, "timeDuration", 25*time.Minute)
 	timeDurationInput := widget.NewFormItem("time duration:", timeDurationEntry)
 
 	timePauseEntry := widget.NewEntry()
-	initTimeDuration(timePauseEntry, "pauseDuration", 5 * time.Minute)
+	initTimeDuration(timePauseEntry, "pauseDuration", 5*time.Minute)
 	timePauseInput := widget.NewFormItem("pause duration:", timePauseEntry)
 
 	insertOk := widget.NewFormItem("", createSaveButton(timeDurationEntry, timePauseEntry, settings))
@@ -84,4 +83,3 @@ func initTimeDuration(timeDurationEntry *widget.Entry, resource string, defaultD
 	}
 	timeDurationEntry.SetText(common.DurationToString(timeDurationEntryStored))
 }
-

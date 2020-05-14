@@ -8,10 +8,10 @@ import (
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/nanobox-io/golang-scribble"
 	"image/color"
 	"os"
-	"github.com/gobuffalo/packr/v2"
 )
 
 const title = "just another pomodoro"
@@ -19,7 +19,7 @@ const title = "just another pomodoro"
 func main() {
 	initStorage()
 
-	logoBox :=  packr.New("logo", "."+ string(os.PathSeparator) + "img"+string(os.PathSeparator)+"jap_logo.png")
+	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
 	pomodoroApp := app.New()
 	logo, err := fyne.LoadResourceFromPath(logoBox.ResolutionDir)
 	if err != nil {
@@ -72,15 +72,13 @@ func main() {
 }
 
 func initStorage() {
-	dataFolder :=  packr.New("data", "./data")
+	dataFolder := packr.New("data", "./data")
 	var err error
 	common.Settings, err = scribble.New(dataFolder.ResolutionDir, nil)
 	if err != nil {
 		panic(err)
 	}
 }
-
-
 
 func NewDailyPomodoroContainer(addPomodoro chan bool) *fyne.Container {
 	doneContainer := container.NewPomodoroDoneContainer(layout.NewHBoxLayout())

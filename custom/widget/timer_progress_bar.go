@@ -31,7 +31,7 @@ func (bar *CustomProgressBar) Start() {
 				bar.SetValue(value)
 				percentage := (value.Seconds() / bar.Max.Seconds()) * 100
 				if percentage == 10 {
-						bar.alert <- true
+					bar.alert <- true
 				}
 				if value <= bar.Min {
 					ticker.Stop()
@@ -48,7 +48,7 @@ func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool) *Cus
 		Max:         maxDuration,
 		pause:       pause,
 		alert:       alert,
-		Value: 		 maxDuration,
+		Value:       maxDuration,
 	}
 	//p.SetValue(maxDuration)
 	widget.Renderer(p).Layout(p.MinSize())
@@ -68,12 +68,7 @@ func (p *CustomProgressBar) CreateRenderer() fyne.WidgetRenderer {
 		p.Max = time.Duration(25) * time.Minute
 	}
 
-	bar := canvas.NewRectangle(color.RGBA{
-		R: 238,
-		G: 238,
-		B: 0,
-		A: 1,
-	})
+	bar := canvas.NewRectangle(color.Black)
 	label := canvas.NewText(common.DurationToString(p.Max), theme.TextColor())
 	label.Alignment = fyne.TextAlignCenter
 	return &customProgressBarRenderer{[]fyne.CanvasObject{bar, label}, bar, label, p}
@@ -119,9 +114,8 @@ func (p *customProgressBarRenderer) updateBar() {
 
 	size := p.progress.Size()
 	//width := int(p.progress.Value.Seconds() / p.progress.Max.Seconds())
-	p.bar.Resize(fyne.NewSize(int(float32(size.Width) - float32(size.Width)*ratio), size.Height))
+	p.bar.Resize(fyne.NewSize(int(float32(size.Width)-float32(size.Width)*ratio), size.Height))
 }
-
 
 // Layout the components of the check widget
 func (p *customProgressBarRenderer) Layout(size fyne.Size) {
@@ -138,7 +132,8 @@ func (p *customProgressBarRenderer) ApplyTheme() {
 }
 
 func (p *customProgressBarRenderer) BackgroundColor() color.Color {
-	return theme.ButtonColor()
+	return common.Yellow
+	//return theme.ButtonColor()
 }
 
 func (p *customProgressBarRenderer) Refresh() {
