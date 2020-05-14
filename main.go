@@ -19,9 +19,9 @@ const title = "just another pomodoro"
 func main() {
 	initStorage()
 
-	imgFolder :=  packr.New("img", "./img")
+	logoBox :=  packr.New("logo", "."+ string(os.PathSeparator) + "img"+string(os.PathSeparator)+"jap_logo.png")
 	pomodoroApp := app.New()
-	logo, err := fyne.LoadResourceFromPath(imgFolder.ResolutionDir + string(os.PathSeparator) + "jap_logo.png")
+	logo, err := fyne.LoadResourceFromPath(logoBox.ResolutionDir)
 	if err != nil {
 		panic(err)
 	}
