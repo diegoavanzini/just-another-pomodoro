@@ -11,6 +11,7 @@ import (
 	"github.com/nanobox-io/golang-scribble"
 	"image/color"
 	"os"
+	"github.com/gobuffalo/packr/v2"
 )
 
 const title = "just another pomodoro"
@@ -18,8 +19,9 @@ const title = "just another pomodoro"
 func main() {
 	initStorage()
 
+	imgFolder :=  packr.New("img", "./img")
 	pomodoroApp := app.New()
-	logo, err := fyne.LoadResourceFromPath("img" + string(os.PathSeparator) + "jap_logo.png")
+	logo, err := fyne.LoadResourceFromPath(imgFolder.ResolutionDir + string(os.PathSeparator) + "jap_logo.png")
 	if err != nil {
 		panic(err)
 	}
@@ -70,8 +72,9 @@ func main() {
 }
 
 func initStorage() {
+	dataFolder :=  packr.New("data", "./data")
 	var err error
-	common.Settings, err = scribble.New("./data", nil)
+	common.Settings, err = scribble.New(dataFolder.ResolutionDir, nil)
 	if err != nil {
 		panic(err)
 	}
