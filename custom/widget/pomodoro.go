@@ -8,8 +8,8 @@ import (
 
 type Pomodoro fyne.CanvasObject
 
-func NewPomodoro(size int, color color.Color, tooltip string) Pomodoro {
+func NewPomodoro(size int, color color.Color) Pomodoro {
 	pomodoro := canvas.NewRectangle(color)
-	pomodoro.SetMinSize(fyne.Size{Width: 1, Height: size})
+	pomodoro.SetMinSize(fyne.Size{Width: 2, Height: size})
 	return pomodoro
 }

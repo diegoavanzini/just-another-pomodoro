@@ -28,9 +28,9 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool) ProgressBarCon
 			panic(err)
 		}
 	}
-	progressBar := custom_widget.NewTimerProgressBar(timerDuration, pause, alert)
-	progressBar.Resize(fyne.NewSize(250, 5))
-	pauseProgressBar := custom_widget.NewTimerProgressBar(pauseDuration, pause, alert)
+	progressBar := custom_widget.NewTimerProgressBar(timerDuration, pause, alert, common.Red)
+	progressBar.Resize(fyne.NewSize(220, 5))
+	pauseProgressBar := custom_widget.NewTimerProgressBar(pauseDuration, pause, alert, common.Green)
 	pauseProgressBar.Resize(fyne.NewSize(50, 5))
 	progressBarContainer := fyne.NewContainerWithLayout(
 		custom_layout.NewResizableGridLayout(2),

@@ -14,6 +14,7 @@ type CustomProgressBar struct {
 	*widget.ProgressBar
 	Min, Max, Value time.Duration
 	pause, alert    chan bool
+	bgColor         color.Color
 }
 
 func (bar *CustomProgressBar) Start() {
@@ -42,13 +43,14 @@ func (bar *CustomProgressBar) Start() {
 	}()
 }
 
-func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool) *CustomProgressBar {
+func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool, bgColor color.Color) *CustomProgressBar {
 	p := &CustomProgressBar{
 		ProgressBar: widget.NewProgressBar(),
 		Max:         maxDuration,
 		pause:       pause,
 		alert:       alert,
 		Value:       maxDuration,
+		bgColor:     bgColor,
 	}
 	//p.SetValue(maxDuration)
 	widget.Renderer(p).Layout(p.MinSize())
@@ -71,7 +73,7 @@ func (p *CustomProgressBar) CreateRenderer() fyne.WidgetRenderer {
 	bar := canvas.NewRectangle(color.Black)
 	label := canvas.NewText(common.DurationToString(p.Max), theme.TextColor())
 	label.Alignment = fyne.TextAlignCenter
-	return &customProgressBarRenderer{[]fyne.CanvasObject{bar, label}, bar, label, p}
+	return &customProgressBarRenderer{[]fyne.CanvasObject{bar, label}, bar, label, p, p.bgColor}
 }
 
 type customProgressBarRenderer struct {
@@ -81,6 +83,7 @@ type customProgressBarRenderer struct {
 	label *canvas.Text
 
 	progress *CustomProgressBar
+	bgColor  color.Color
 }
 
 // MinSize calculates the minimum size of a progress bar.
@@ -132,7 +135,7 @@ func (p *customProgressBarRenderer) ApplyTheme() {
 }
 
 func (p *customProgressBarRenderer) BackgroundColor() color.Color {
-	return common.Yellow
+	return p.bgColor
 	//return theme.ButtonColor()
 }
 

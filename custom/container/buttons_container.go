@@ -15,7 +15,7 @@ type ButtonContainer struct {
 	Container *fyne.Container
 }
 
-func NewButtonContainer(pause chan bool, mainApp fyne.App) ButtonContainer {
+func NewButtonContainer(pause chan bool, mainApp fyne.App) *fyne.Container {
 	var err error
 	startBox := packr.New("start", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"start.png")
 	startIcon, err := fyne.LoadResourceFromPath(startBox.ResolutionDir)
@@ -49,9 +49,7 @@ func NewButtonContainer(pause chan bool, mainApp fyne.App) ButtonContainer {
 		layout.NewVBoxLayout(),
 		pauseFocusButton,
 		settingsButton)
-	return ButtonContainer{
-		Container: buttonsContainer,
-	}
+	return buttonsContainer
 }
 
 func createSettingsWindows(pomodoroApp fyne.App) fyne.Window {

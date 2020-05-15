@@ -3,7 +3,6 @@ package main
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/custom/container"
-	custom_layout "bitbucket.org/avanz/anotherPomodoro/custom/layout"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
@@ -45,11 +44,10 @@ func main() {
 		}
 	}(pause, alert)
 
-	pomodoroWindows.Resize(fyne.Size{Width: 420, Height: 70})
-	winGrid := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
+	globalContainer := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
+	buttonsContainer := container.NewButtonContainer(pause, pomodoroApp)
 
 	addPomodoro := make(chan bool)
-	buttonsContainer := container.NewButtonContainer(pause, pomodoroApp)
 	progressBarContainer := container.NewProgressBarContainer(pause, alert, addPomodoro)
 
 	dailyContainer := NewDailyPomodoroContainer(addPomodoro)
@@ -58,16 +56,16 @@ func main() {
 		layout.NewVBoxLayout(),
 		progressBarContainer.Container,
 		dailyContainer)
-	progressAndDoneContainer.Resize(fyne.Size{310, 50})
+	//progressAndDoneContainer.Resize(fyne.Size{310, 50})
 
 	timerContainer := fyne.NewContainerWithLayout(
-		custom_layout.NewResizableGridLayout(2),
+		layout.NewHBoxLayout(),
 		progressAndDoneContainer,
-		buttonsContainer.Container)
+		buttonsContainer)
 
-	winGrid.AddObject(timerContainer)
+	globalContainer.AddObject(timerContainer)
 
-	pomodoroWindows.SetContent(winGrid)
+	pomodoroWindows.SetContent(globalContainer)
 	pomodoroWindows.ShowAndRun()
 }
 
