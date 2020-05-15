@@ -46,10 +46,7 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 		panic(err)
 	}
 
-	pomodoroList, err := c.repository.ReadAll("workdone")
-	if err != nil {
-		log.Fatal(err)
-	}
+	pomodoroList, _ := c.repository.ReadAll("workdone")
 	layout := "02-01-2006 15:04"
 	started := time.Now().UTC()
 	currentPosition := c.getPosition(started)
