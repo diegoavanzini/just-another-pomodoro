@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	custom_layout "bitbucket.org/avanz/anotherPomodoro/custom/layout"
 	custom_widget "bitbucket.org/avanz/anotherPomodoro/custom/widget"
+	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"fyne.io/fyne"
 	"time"
 )
@@ -12,18 +13,18 @@ type ProgressBarContainer struct {
 	Container *fyne.Container
 }
 
-func NewProgressBarContainer(pause, alert, addPomodoro chan bool) ProgressBarContainer {
+func NewProgressBarContainer(pause, alert, addPomodoro chan bool, repositorySettings repository.ISettingsRepository) ProgressBarContainer {
 	var timerDuration, pauseDuration time.Duration
-	err := common.Settings.Read("settings", "timeDuration", &timerDuration)
+	err := repositorySettings.Read("settings", "timeDuration", &timerDuration)
 	if err != nil {
-		err = common.Settings.Write("settings", "timeDuration", 25*time.Minute)
+		err = repositorySettings.Write("settings", "timeDuration", 25*time.Minute)
 		if err != nil {
 			panic(err)
 		}
 	}
-	err = common.Settings.Read("settings", "pauseDuration", &pauseDuration)
+	err = repositorySettings.Read("settings", "pauseDuration", &pauseDuration)
 	if err != nil {
-		err = common.Settings.Write("settings", "pauseDuration", 5*time.Minute)
+		err = repositorySettings.Write("settings", "pauseDuration", 5*time.Minute)
 		if err != nil {
 			panic(err)
 		}

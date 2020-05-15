@@ -2,6 +2,7 @@ package container
 
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
+	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
@@ -15,7 +16,7 @@ type ButtonContainer struct {
 	Container *fyne.Container
 }
 
-func NewButtonContainer(pause chan bool, mainApp fyne.App) *fyne.Container {
+func NewButtonContainer(pause chan bool, mainApp fyne.App, settingsRepository repository.ISettingsRepository) *fyne.Container {
 	var err error
 	startBox := packr.New("start", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"start.png")
 	startIcon, err := fyne.LoadResourceFromPath(startBox.ResolutionDir)
@@ -40,7 +41,7 @@ func NewButtonContainer(pause chan bool, mainApp fyne.App) *fyne.Container {
 	pauseFocusButton.Resize(fyne.NewSize(30, 30))
 
 	settingsButton := widget.NewButton("Settings...", func() {
-		settings := createSettingsWindows(mainApp)
+		settings := createSettingsWindows(mainApp, settingsRepository)
 		settings.Show()
 		settings.RequestFocus()
 	})
@@ -52,20 +53,21 @@ func NewButtonContainer(pause chan bool, mainApp fyne.App) *fyne.Container {
 	return buttonsContainer
 }
 
-func createSettingsWindows(pomodoroApp fyne.App) fyne.Window {
+func createSettingsWindows(pomodoroApp fyne.App, settingsRepository repository.ISettingsRepository) fyne.Window {
 	settings := pomodoroApp.NewWindow("Settings")
 	settings.Resize(fyne.Size{300, 50})
 	settings.CenterOnScreen()
 
 	timeDurationEntry := widget.NewEntry()
-	initTimeDuration(timeDurationEntry, "timeDuration", 25*time.Minute)
+
+	initTimeDuration(timeDurationEntry, "timeDuration", 25*time.Minute, settingsRepository)
 	timeDurationInput := widget.NewFormItem("time duration:", timeDurationEntry)
 
 	timePauseEntry := widget.NewEntry()
-	initTimeDuration(timePauseEntry, "pauseDuration", 5*time.Minute)
+	initTimeDuration(timePauseEntry, "pauseDuration", 5*time.Minute, settingsRepository)
 	timePauseInput := widget.NewFormItem("pause duration:", timePauseEntry)
 
-	insertOk := widget.NewFormItem("", createSaveButton(timeDurationEntry, timePauseEntry, settings))
+	insertOk := widget.NewFormItem("", createSaveButton(timeDurationEntry, timePauseEntry, settings, settingsRepository))
 
 	settingsForm := widget.NewForm(timeDurationInput, timePauseInput, insertOk)
 	settingsContainer := fyne.NewContainerWithLayout(layout.NewVBoxLayout(), settingsForm)
@@ -73,25 +75,25 @@ func createSettingsWindows(pomodoroApp fyne.App) fyne.Window {
 	return settings
 }
 
-func createSaveButton(timeDurationEntry *widget.Entry, timePauseEntry *widget.Entry, settings fyne.Window) *widget.Button {
+func createSaveButton(timeDurationEntry *widget.Entry, timePauseEntry *widget.Entry, settings fyne.Window, settingsRepository repository.ISettingsRepository) *widget.Button {
 	return widget.NewButton("save", func() {
 		duration, err := common.StringToDuration(timeDurationEntry.Text)
 		if err != nil {
 			panic(err)
 		}
-		common.Settings.Write("settings", "timeDuration", duration)
+		settingsRepository.Write("settings", "timeDuration", duration)
 		pauseDuration, err := common.StringToDuration(timePauseEntry.Text)
 		if err != nil {
 			panic(err)
 		}
-		common.Settings.Write("settings", "pauseDuration", pauseDuration)
+		settingsRepository.Write("settings", "pauseDuration", pauseDuration)
 		settings.Close()
 	})
 }
 
-func initTimeDuration(timeDurationEntry *widget.Entry, resource string, defaultDuration time.Duration) {
+func initTimeDuration(timeDurationEntry *widget.Entry, resource string, defaultDuration time.Duration, settingsRepository repository.ISettingsRepository) {
 	var timeDurationEntryStored time.Duration
-	err := common.Settings.Read("settings", resource, &timeDurationEntryStored)
+	err := settingsRepository.Read("settings", resource, &timeDurationEntryStored)
 	if err != nil {
 		panic(err)
 	}

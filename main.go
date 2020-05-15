@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/custom/container"
+	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
 	"github.com/gobuffalo/packr/v2"
-	"github.com/nanobox-io/golang-scribble"
 	"image/color"
 	"os"
 )
@@ -16,7 +15,10 @@ import (
 const title = "just another pomodoro"
 
 func main() {
-	initStorage()
+	repository, err := repository.NewSettingsRepository()
+	if err != nil {
+		panic(err)
+	}
 
 	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
 	pomodoroApp := app.New()
@@ -45,12 +47,12 @@ func main() {
 	}(pause, alert)
 
 	globalContainer := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
-	buttonsContainer := container.NewButtonContainer(pause, pomodoroApp)
+	buttonsContainer := container.NewButtonContainer(pause, pomodoroApp,repository)
 
 	addPomodoro := make(chan bool)
-	progressBarContainer := container.NewProgressBarContainer(pause, alert, addPomodoro)
+	progressBarContainer := container.NewProgressBarContainer(pause, alert, addPomodoro,repository)
 
-	dailyContainer := NewDailyPomodoroContainer(addPomodoro)
+	dailyContainer := NewDailyPomodoroContainer(addPomodoro, repository)
 
 	progressAndDoneContainer := fyne.NewContainerWithLayout(
 		layout.NewVBoxLayout(),
@@ -69,17 +71,12 @@ func main() {
 	pomodoroWindows.ShowAndRun()
 }
 
-func initStorage() {
-	dataFolder := packr.New("data", "./data")
-	var err error
-	common.Settings, err = scribble.New(dataFolder.ResolutionDir, nil)
-	if err != nil {
-		panic(err)
-	}
+func initSettings() (repository.ISettingsRepository, error) {
+	return repository.NewSettingsRepository()
 }
 
-func NewDailyPomodoroContainer(addPomodoro chan bool) *fyne.Container {
-	doneContainer := container.NewPomodoroDoneContainer(layout.NewHBoxLayout())
+func NewDailyPomodoroContainer(addPomodoro chan bool, repository repository.ISettingsRepository) *fyne.Container {
+	doneContainer := container.NewPomodoroDoneContainer(layout.NewHBoxLayout(), repository)
 	doneContainer.AddPomodoro()
 
 	dailyContainer := fyne.NewContainerWithLayout(

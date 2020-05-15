@@ -3,6 +3,7 @@ package container
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/custom/widget"
+	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"encoding/json"
 	"fmt"
 	"fyne.io/fyne"
@@ -13,11 +14,13 @@ import (
 
 type PomodoroDoneContainer struct {
 	*fyne.Container
+	repository repository.ISettingsRepository
 }
 
-func NewPomodoroDoneContainer(boxLayout fyne.Layout) *PomodoroDoneContainer {
+func NewPomodoroDoneContainer(boxLayout fyne.Layout, repository repository.ISettingsRepository) *PomodoroDoneContainer {
 	container := &PomodoroDoneContainer{
 		Container: fyne.NewContainerWithLayout(boxLayout),
+		repository: repository,
 	}
 	for i := 0; i < 48; i++ {
 		pomodoro := widget.NewPomodoro(5, theme.BackgroundColor())
@@ -33,17 +36,17 @@ type PomodoroStruct struct {
 
 func (c PomodoroDoneContainer) AddPomodoro() {
 	timeDuration := 25 * time.Minute
-	err := common.Settings.Read("settings", "timeDuration", &timeDuration)
+	err := c.repository.Read("settings", "timeDuration", &timeDuration)
 	if err != nil {
 		panic(err)
 	}
 	pauseDuration := 5 * time.Minute
-	err = common.Settings.Read("settings", "pauseDuration", &pauseDuration)
+	err = c.repository.Read("settings", "pauseDuration", &pauseDuration)
 	if err != nil {
 		panic(err)
 	}
 
-	pomodoroList, err := common.Settings.ReadAll("workdone")
+	pomodoroList, err := c.repository.ReadAll("workdone")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,10 +70,11 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 		c.Objects[pPosition] = widget.NewPomodoro(5, common.Green)
 	}
 	if !skipInsert {
-		if err := common.Settings.Write("workdone", fmt.Sprintf("pomodoro_%s_%d", started.Format("20060102"), currentPosition), PomodoroStruct{
+		pomodoroStruct := PomodoroStruct{
 			TimeStarted:  started.Format(layout),
 			TimeDuration: int(timeDuration.Minutes()),
-		}); err != nil  {
+		}
+		if err := c.repository.Write("workdone", fmt.Sprintf("pomodoro_%s_%d", started.Format("20060102"), currentPosition), pomodoroStruct); err != nil  {
 			log.Fatal(err)
 		}
 	}
