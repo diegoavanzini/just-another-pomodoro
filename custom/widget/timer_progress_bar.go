@@ -2,11 +2,14 @@ package widget
 
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
+	"bitbucket.org/avanz/anotherPomodoro/repository"
+	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
 	"image/color"
+	"log"
 	"time"
 )
 
@@ -15,6 +18,8 @@ type CustomProgressBar struct {
 	Min, Max, Value time.Duration
 	pause, alert    chan bool
 	bgColor         color.Color
+	repository      repository.IPomodoroRepository
+	name            string
 }
 
 func (bar *CustomProgressBar) Start() {
@@ -30,8 +35,12 @@ func (bar *CustomProgressBar) Start() {
 			case <-ticker.C:
 				value -= 1 * time.Second
 				bar.SetValue(value)
+				err := bar.repository.Write("current", "timerValue", fmt.Sprintf("%s_%d", bar.name, value))
+				if err != nil {
+					log.Fatal(err)
+				}
 				percentage := (value.Seconds() / bar.Max.Seconds()) * 100
-				if percentage == 10 {
+				if percentage == 1 {
 					bar.alert <- true
 				}
 				if value <= bar.Min {
@@ -43,7 +52,7 @@ func (bar *CustomProgressBar) Start() {
 	}()
 }
 
-func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool, bgColor color.Color) *CustomProgressBar {
+func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool, bgColor color.Color, repository repository.IPomodoroRepository, name string) *CustomProgressBar {
 	p := &CustomProgressBar{
 		ProgressBar: widget.NewProgressBar(),
 		Max:         maxDuration,
@@ -51,6 +60,8 @@ func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool, bgCo
 		alert:       alert,
 		Value:       maxDuration,
 		bgColor:     bgColor,
+		repository:  repository,
+		name:        name,
 	}
 	//p.SetValue(maxDuration)
 	widget.Renderer(p).Layout(p.MinSize())

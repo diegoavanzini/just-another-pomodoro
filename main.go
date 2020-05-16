@@ -3,22 +3,51 @@ package main
 import (
 	"bitbucket.org/avanz/anotherPomodoro/custom/container"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
+	"bufio"
+	"encoding/json"
+	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
 	"github.com/gobuffalo/packr/v2"
 	"image/color"
+	"log"
+	"net"
 	"os"
+	"strings"
+	"time"
 )
 
 const title = "just another pomodoro"
+const PORT = "1234"
 
 func main() {
-	repository, err := repository.NewSettingsRepository()
+
+	repository, err := repository.NewPomodoroRepository()
 	if err != nil {
 		panic(err)
 	}
+
+	count := 0
+	go func() {
+		l, err := net.Listen("tcp4", fmt.Sprintf("%s:%s", "127.0.0.1", PORT))
+		if err != nil {
+			log.Fatal(err)
+			//return
+		}
+		defer l.Close()
+
+		for {
+			c, err := l.Accept()
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+			go handleConnection(c, repository)
+			count++
+		}
+	}()
 
 	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
 	pomodoroApp := app.New()
@@ -47,10 +76,10 @@ func main() {
 	}(pause, alert)
 
 	globalContainer := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
-	buttonsContainer := container.NewButtonContainer(pause, pomodoroApp,repository)
+	buttonsContainer := container.NewButtonContainer(pause, pomodoroApp, repository)
 
 	addPomodoro := make(chan bool)
-	progressBarContainer := container.NewProgressBarContainer(pause, alert, addPomodoro,repository)
+	progressBarContainer := container.NewProgressBarContainer(pause, alert, addPomodoro, repository)
 
 	dailyContainer := NewDailyPomodoroContainer(addPomodoro, repository)
 
@@ -71,11 +100,49 @@ func main() {
 	pomodoroWindows.ShowAndRun()
 }
 
-func initSettings() (repository.ISettingsRepository, error) {
-	return repository.NewSettingsRepository()
+func handleConnection(c net.Conn, repository repository.IPomodoroRepository) {
+	fmt.Print(".")
+	for {
+		netData, err := bufio.NewReader(c).ReadString('\n')
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		temp := strings.TrimSpace(string(netData))
+		if temp == "STOP" {
+			break
+		}
+		var currentTimerValue string
+		err = repository.Read("current", "timerValue", &currentTimerValue)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var timeDuration = int((25 * time.Minute).Seconds())
+		err = repository.Read("settings", "timeDuration", &timeDuration)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var pauseDuration = int((5 * time.Minute).Seconds())
+		err = repository.Read("settings", "pauseDuration", &pauseDuration)
+		if err != nil {
+			log.Fatal(err)
+		}
+		currentPomodoro := struct {
+			TimeDuration      int
+			PauseDuration     int
+			CurrentTimerValue string
+		}{timeDuration, pauseDuration, currentTimerValue}
+		currentPomodoroJson, err := json.Marshal(currentPomodoro)
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.Write(currentPomodoroJson)
+	}
+	c.Close()
 }
 
-func NewDailyPomodoroContainer(addPomodoro chan bool, repository repository.ISettingsRepository) *fyne.Container {
+func NewDailyPomodoroContainer(addPomodoro chan bool, repository repository.IPomodoroRepository) *fyne.Container {
 	doneContainer := container.NewPomodoroDoneContainer(layout.NewHBoxLayout(), repository)
 	doneContainer.AddPomodoro()
 

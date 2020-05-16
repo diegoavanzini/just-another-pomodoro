@@ -14,15 +14,15 @@ import (
 
 type PomodoroDoneContainer struct {
 	*fyne.Container
-	repository repository.ISettingsRepository
+	repository repository.IPomodoroRepository
 }
 
-func NewPomodoroDoneContainer(boxLayout fyne.Layout, repository repository.ISettingsRepository) *PomodoroDoneContainer {
+func NewPomodoroDoneContainer(boxLayout fyne.Layout, repository repository.IPomodoroRepository) *PomodoroDoneContainer {
 	container := &PomodoroDoneContainer{
-		Container: fyne.NewContainerWithLayout(boxLayout),
+		Container:  fyne.NewContainerWithLayout(boxLayout),
 		repository: repository,
 	}
-	for i := 0; i < 48; i++ {
+	for i := 0; i <= 48; i++ {
 		pomodoro := widget.NewPomodoro(5, theme.BackgroundColor())
 		container.AddObject(pomodoro)
 	}
@@ -46,7 +46,8 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 		panic(err)
 	}
 
-	pomodoroList, _ := c.repository.ReadAll("workdone")
+	workdoneToday := "workdone" + time.Now().Format("20060102")
+	pomodoroList, _ := c.repository.ReadAll(workdoneToday)
 	layout := "02-01-2006 15:04"
 	started := time.Now().UTC()
 	currentPosition := c.getPosition(started)
@@ -57,7 +58,7 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 			log.Fatal(err)
 		}
 		started, err := time.Parse(layout, p.TimeStarted)
-		if err!= nil {
+		if err != nil {
 			log.Fatal(err)
 		}
 		pPosition := c.getPosition(started)
@@ -71,7 +72,7 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 			TimeStarted:  started.Format(layout),
 			TimeDuration: int(timeDuration.Minutes()),
 		}
-		if err := c.repository.Write("workdone", fmt.Sprintf("pomodoro_%s_%d", started.Format("20060102"), currentPosition), pomodoroStruct); err != nil  {
+		if err := c.repository.Write(workdoneToday, fmt.Sprintf("pomodoro_%d", currentPosition), pomodoroStruct); err != nil {
 			log.Fatal(err)
 		}
 	}

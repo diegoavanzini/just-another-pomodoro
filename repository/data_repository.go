@@ -5,36 +5,36 @@ import (
 	scribble "github.com/nanobox-io/golang-scribble"
 )
 
-type ISettingsRepository interface {
+type IPomodoroRepository interface {
 	Write(collection, resource string, v interface{}) error
 	Read(collection, resource string, v interface{}) error
 	ReadAll(s string) ([]string, error)
 }
 
-type settingRepository struct {
-	settingsData *scribble.Driver
+type pomodoroRepository struct {
+	data *scribble.Driver
 }
 
-func (s3 settingRepository) ReadAll(s string) ([]string, error) {
-	return s3.settingsData.ReadAll(s)
+func (p pomodoroRepository) ReadAll(s string) ([]string, error) {
+	return p.data.ReadAll(s)
 }
 
-func (s3 settingRepository) Write(collection, resource string, v interface{}) error  {
-	return s3.settingsData.Write(collection, resource, v)
+func (p pomodoroRepository) Write(collection, resource string, v interface{}) error {
+	return p.data.Write(collection, resource, v)
 }
 
-func (s3 settingRepository) Read(collection, resource string, v interface{}) error {
-	return s3.settingsData.Read(collection, resource, v)
+func (p pomodoroRepository) Read(collection, resource string, v interface{}) error {
+	return p.data.Read(collection, resource, v)
 }
 
-func NewSettingsRepository() (ISettingsRepository, error) {
+func NewPomodoroRepository() (IPomodoroRepository, error) {
 	dataFolder := packr.New("data", "../data")
 	var err error
 	data, err := scribble.New(dataFolder.ResolutionDir, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &settingRepository{
-		settingsData:  data,
+	return &pomodoroRepository{
+		data: data,
 	}, nil
 }
