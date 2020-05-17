@@ -22,7 +22,7 @@ func NewPomodoroDoneContainer(boxLayout fyne.Layout, repository repository.IPomo
 		Container:  fyne.NewContainerWithLayout(boxLayout),
 		repository: repository,
 	}
-	for i := 0; i <= 48; i++ {
+	for i := 0; i < 48; i++ {
 		pomodoro := widget.NewPomodoro(5, theme.BackgroundColor())
 		container.AddObject(pomodoro)
 	}
@@ -79,7 +79,7 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 }
 
 func (c PomodoroDoneContainer) getPosition(started time.Time) int {
-	pPosition := started.Hour()*2 + 1
+	pPosition := started.Hour()*2
 	if started.Minute() > 30 {
 		pPosition = pPosition + 1
 	}

@@ -2,7 +2,10 @@ package widget
 
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
+	models "bitbucket.org/avanz/anotherPomodoro/model"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
@@ -10,6 +13,9 @@ import (
 	"fyne.io/fyne/widget"
 	"image/color"
 	"log"
+	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,10 +26,22 @@ type CustomProgressBar struct {
 	bgColor         color.Color
 	repository      repository.IPomodoroRepository
 	name            string
+	tcpClient       *net.Conn
 }
+
+const CLIENT_PORT = 1234
 
 func (bar *CustomProgressBar) Start() {
 	ticker := time.NewTicker(1 * time.Second)
+	var addressPort string
+	bar.repository.Read("settings", "synkAddressPort", &addressPort)
+	if addressPort != "" {
+		c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", addressPort, CLIENT_PORT))
+		if err != nil {
+			log.Fatal(err)
+		}
+		bar.tcpClient = &c
+	}
 	value := bar.Max
 	func() {
 		for {
@@ -33,14 +51,36 @@ func (bar *CustomProgressBar) Start() {
 					<-bar.pause
 				}
 			case <-ticker.C:
-				value -= 1 * time.Second
+				if bar.tcpClient == nil {
+					value -= 1 * time.Second
+				} else {
+					fmt.Fprintf(*bar.tcpClient, "\n")
+					message, err := bufio.NewReader(*bar.tcpClient).ReadString('\n')
+					if err != nil {
+						log.Fatal(err)
+					}
+					var currentPomodoro = models.CurrentPomodoro{}
+					err = json.Unmarshal([]byte(message), &currentPomodoro)
+					if err != nil {
+						log.Fatal(err)
+					}
+					nameAndValue := strings.Split(currentPomodoro.CurrentTimerValue, "_")
+					if nameAndValue[0] == bar.name {
+						currentPomodoroValue, err := strconv.Atoi(nameAndValue[1])
+						if err != nil {
+							log.Fatal(err)
+						}
+						value = time.Duration(currentPomodoroValue)
+					} else {
+						return
+					}
+				}
 				bar.SetValue(value)
 				err := bar.repository.Write("current", "timerValue", fmt.Sprintf("%s_%d", bar.name, value))
 				if err != nil {
 					log.Fatal(err)
 				}
-				percentage := (value.Seconds() / bar.Max.Seconds()) * 100
-				if percentage == 1 {
+				if (value.Seconds()/bar.Max.Seconds())*100 == 1 {
 					bar.alert <- true
 				}
 				if value <= bar.Min {
@@ -63,7 +103,7 @@ func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool, bgCo
 		repository:  repository,
 		name:        name,
 	}
-	//p.SetValue(maxDuration)
+	p.repository.Write("settings", "synkAddressPort", "")
 	widget.Renderer(p).Layout(p.MinSize())
 	return p
 }

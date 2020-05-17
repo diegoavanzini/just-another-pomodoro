@@ -29,7 +29,7 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool, pomodoroReposi
 			panic(err)
 		}
 	}
-	progressBar := custom_widget.NewTimerProgressBar(timerDuration, pause, alert, common.Red, pomodoroRepository, "timer")
+	progressBar := custom_widget.NewTimerProgressBar(timerDuration, pause, alert, common.Yellow, pomodoroRepository, "timer")
 	progressBar.Resize(fyne.NewSize(220, 5))
 	pauseProgressBar := custom_widget.NewTimerProgressBar(pauseDuration, pause, alert, common.Green, pomodoroRepository, "pause")
 	pauseProgressBar.Resize(fyne.NewSize(50, 5))

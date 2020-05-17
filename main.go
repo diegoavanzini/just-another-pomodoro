@@ -20,7 +20,7 @@ import (
 )
 
 const title = "just another pomodoro"
-const PORT = "1234"
+const SERVER_PORT = "1234"
 
 func main() {
 
@@ -29,25 +29,12 @@ func main() {
 		panic(err)
 	}
 
-	count := 0
-	go func() {
-		l, err := net.Listen("tcp4", fmt.Sprintf("%s:%s", "127.0.0.1", PORT))
-		if err != nil {
-			log.Fatal(err)
-			//return
-		}
-		defer l.Close()
+	startSharingListener(repository)
 
-		for {
-			c, err := l.Accept()
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			go handleConnection(c, repository)
-			count++
-		}
-	}()
+	repository.Write("settings", "synkAddressPort", "")
+	if err != nil {
+		panic(err)
+	}
 
 	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
 	pomodoroApp := app.New()
@@ -59,6 +46,7 @@ func main() {
 	pomodoroWindows := pomodoroApp.NewWindow(title)
 
 	pause := make(chan bool, 2)
+	inSync := make(chan bool)
 	alert := make(chan bool)
 	go func(pause, alert chan bool) {
 		for {
@@ -76,7 +64,7 @@ func main() {
 	}(pause, alert)
 
 	globalContainer := fyne.NewContainerWithLayout(layout.NewVBoxLayout())
-	buttonsContainer := container.NewButtonContainer(pause, pomodoroApp, repository)
+	buttonsContainer := container.NewButtonContainer(pause, inSync, pomodoroApp, repository)
 
 	addPomodoro := make(chan bool)
 	progressBarContainer := container.NewProgressBarContainer(pause, alert, addPomodoro, repository)
@@ -100,13 +88,34 @@ func main() {
 	pomodoroWindows.ShowAndRun()
 }
 
+func startSharingListener(repository repository.IPomodoroRepository) {
+	countConnection := 0
+	go func() {
+		l, err := net.Listen("tcp4", fmt.Sprintf("%s:%s", "127.0.0.1", SERVER_PORT))
+		if err != nil {
+			log.Fatal(err)
+			//return
+		}
+		defer l.Close()
+
+		for {
+			c, err := l.Accept()
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+			go handleConnection(c, repository)
+			countConnection++
+		}
+	}()
+}
+
 func handleConnection(c net.Conn, repository repository.IPomodoroRepository) {
 	fmt.Print(".")
 	for {
 		netData, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {
-			fmt.Println(err)
-			return
+			log.Fatal(err)
 		}
 
 		temp := strings.TrimSpace(string(netData))
@@ -137,7 +146,7 @@ func handleConnection(c net.Conn, repository repository.IPomodoroRepository) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		c.Write(currentPomodoroJson)
+		c.Write([]byte(string(currentPomodoroJson) + "\n"))
 	}
 	c.Close()
 }
