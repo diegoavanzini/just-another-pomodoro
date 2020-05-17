@@ -9,14 +9,17 @@ Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyn
 - implement settings windows:
     1. ~~set timer duration~~ 
     2. ~~set break timer duration~~
-    3. continuous pomodoro
+    3. ~~continuous pomodoro~~
     4. stop at every pomodoro
     5. insert comment on every pomodoro
+<<<<<<< HEAD
 - ~~sync tomato with remote pair~~
-- made tests
-- refactoring
-- manage errors
 - disable pause button when in sync
+- refactoring
+- change log system
+- made tests
+- manage errors
+- change storage from json to bolt(?)
 - sync tomato with github commit
 ---
 ![alt text](img/jap2020-05-0817-15-27.png "screenshot")
