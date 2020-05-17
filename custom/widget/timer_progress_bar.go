@@ -2,10 +2,8 @@ package widget
 
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
-	models "bitbucket.org/avanz/anotherPomodoro/model"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
-	"bufio"
-	"encoding/json"
+	"bitbucket.org/avanz/anotherPomodoro/sync"
 	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
@@ -13,7 +11,6 @@ import (
 	"fyne.io/fyne/widget"
 	"image/color"
 	"log"
-	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -26,22 +23,11 @@ type CustomProgressBar struct {
 	bgColor         color.Color
 	repository      repository.IPomodoroRepository
 	name            string
-	tcpClient       *net.Conn
+	tcpClient       sync.IClient
 }
-
-const CLIENT_PORT = 1234
 
 func (bar *CustomProgressBar) Start() {
 	ticker := time.NewTicker(1 * time.Second)
-	var addressPort string
-	bar.repository.Read("settings", "synkAddressPort", &addressPort)
-	if addressPort != "" {
-		c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", addressPort, CLIENT_PORT))
-		if err != nil {
-			log.Fatal(err)
-		}
-		bar.tcpClient = &c
-	}
 	value := bar.Max
 	func() {
 		for {
@@ -54,13 +40,7 @@ func (bar *CustomProgressBar) Start() {
 				if bar.tcpClient == nil {
 					value -= 1 * time.Second
 				} else {
-					fmt.Fprintf(*bar.tcpClient, "\n")
-					message, err := bufio.NewReader(*bar.tcpClient).ReadString('\n')
-					if err != nil {
-						log.Fatal(err)
-					}
-					var currentPomodoro = models.CurrentPomodoro{}
-					err = json.Unmarshal([]byte(message), &currentPomodoro)
+					currentPomodoro, err := bar.tcpClient.GetRemotePomodoro()
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -103,7 +83,6 @@ func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool, bgCo
 		repository:  repository,
 		name:        name,
 	}
-	p.repository.Write("settings", "synkAddressPort", "")
 	widget.Renderer(p).Layout(p.MinSize())
 	return p
 }
@@ -125,6 +104,10 @@ func (p *CustomProgressBar) CreateRenderer() fyne.WidgetRenderer {
 	label := canvas.NewText(common.DurationToString(p.Max), theme.TextColor())
 	label.Alignment = fyne.TextAlignCenter
 	return &customProgressBarRenderer{[]fyne.CanvasObject{bar, label}, bar, label, p, p.bgColor}
+}
+
+func (bar *CustomProgressBar) SetSyncClient(client sync.IClient) {
+	bar.tcpClient = client
 }
 
 type customProgressBarRenderer struct {

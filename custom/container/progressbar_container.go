@@ -5,6 +5,7 @@ import (
 	custom_layout "bitbucket.org/avanz/anotherPomodoro/custom/layout"
 	custom_widget "bitbucket.org/avanz/anotherPomodoro/custom/widget"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
+	"bitbucket.org/avanz/anotherPomodoro/sync"
 	"fyne.io/fyne"
 	"time"
 )
@@ -13,7 +14,7 @@ type ProgressBarContainer struct {
 	Container *fyne.Container
 }
 
-func NewProgressBarContainer(pause, alert, addPomodoro chan bool, pomodoroRepository repository.IPomodoroRepository) ProgressBarContainer {
+func NewProgressBarContainer(pause, alert, addPomodoro chan bool,syncRemoteAddress chan string, pomodoroRepository repository.IPomodoroRepository) ProgressBarContainer {
 	var timerDuration, pauseDuration time.Duration
 	err := pomodoroRepository.Read("settings", "timeDuration", &timerDuration)
 	if err != nil {
@@ -29,6 +30,9 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool, pomodoroReposi
 			panic(err)
 		}
 	}
+
+	pomodoroRepository.Write("settings", "synkAddress", "") // reset synk remote
+
 	progressBar := custom_widget.NewTimerProgressBar(timerDuration, pause, alert, common.Yellow, pomodoroRepository, "timer")
 	progressBar.Resize(fyne.NewSize(220, 5))
 	pauseProgressBar := custom_widget.NewTimerProgressBar(pauseDuration, pause, alert, common.Green, pomodoroRepository, "pause")
@@ -37,6 +41,19 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool, pomodoroReposi
 		custom_layout.NewResizableGridLayout(2),
 		progressBar,
 		pauseProgressBar)
+
+
+	go func(syncRemoteAddress chan string) {
+		for {
+			remoteAddress := <-syncRemoteAddress
+			if remoteAddress == "" {
+				progressBar.SetSyncClient(nil)
+			} else {
+				progressBar.SetSyncClient(sync.NewTcpClient(remoteAddress))
+			}
+		}
+	}(syncRemoteAddress)
+
 	go func() {
 		for {
 			pauseProgressBar.SetValue(pauseDuration)
