@@ -53,13 +53,12 @@ func NewPauseButton(pause chan bool, inSync chan string) *widget.Button {
 		pauseFocusButton.SetIcon(icons[toPause])
 	})
 
-	go func(inSync chan string) {
+	go func(syncAddress chan string) {
 		for {
-			sync := <-inSync
-			if sync != "" {
-				pauseFocusButton.Enable()
-			} else {
+			if <-syncAddress != "" {
 				pauseFocusButton.Disable()
+			} else {
+				pauseFocusButton.Enable()
 			}
 		}
 	}(inSync)

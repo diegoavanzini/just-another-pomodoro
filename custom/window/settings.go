@@ -64,11 +64,7 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress *widget.Ent
 		}
 		settingsRepository.Write("settings", "pauseDuration", pauseDuration)
 		settingsRepository.Write("settings", "synkAddress", synkAddress.Text)
-		if synkAddress.Text != "" {
-			inSync <- synkAddress.Text
-		} else {
-			inSync <- ""
-		}
+		inSync <- synkAddress.Text
 		settings.Close()
 	})
 }
