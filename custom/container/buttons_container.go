@@ -14,17 +14,17 @@ type ButtonContainer struct {
 	Container *fyne.Container
 }
 
-func NewButtonContainer(pause chan bool, inSync chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository) *fyne.Container {
+func NewButtonContainer(pause chan bool, syncRemoteAddressListener chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository) *fyne.Container {
 	buttonsContainer := fyne.NewContainerWithLayout(
 		layout.NewVBoxLayout(),
-		NewPauseButton(pause, inSync),
-		NewSettingsButton(inSync, mainApp, settingsRepository))
+		NewPauseButton(pause, syncRemoteAddressListener),
+		NewSettingsButton(syncRemoteAddressListener, mainApp, settingsRepository))
 	return buttonsContainer
 }
 
-func NewSettingsButton(inSync chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository) *widget.Button {
+func NewSettingsButton(syncRemoteAddressListener chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository) *widget.Button {
 	settingsButton := widget.NewButton("Settings...", func() {
-		settingsWindow := window.NewSettingsWindow(inSync, mainApp, settingsRepository)
+		settingsWindow := window.NewSettingsWindow(syncRemoteAddressListener, mainApp, settingsRepository)
 		settingsWindow.Show()
 		settingsWindow.RequestFocus()
 	})
@@ -32,7 +32,7 @@ func NewSettingsButton(inSync chan string, mainApp fyne.App, settingsRepository 
 	return settingsButton
 }
 
-func NewPauseButton(pause chan bool, inSync chan string) *widget.Button {
+func NewPauseButton(pause chan bool, syncRemoteAddressListener chan string) *widget.Button {
 	var err error
 	startIcon, err := fyne.LoadResourceFromPath(packr.New("start", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"start.png").ResolutionDir)
 	if err != nil {
@@ -53,15 +53,15 @@ func NewPauseButton(pause chan bool, inSync chan string) *widget.Button {
 		pauseFocusButton.SetIcon(icons[toPause])
 	})
 
-	go func(syncAddress chan string) {
+	go func(syncRemoteAddressListener chan string) {
 		for {
-			if <-syncAddress != "" {
+			if <-syncRemoteAddressListener != "" {
 				pauseFocusButton.Disable()
 			} else {
 				pauseFocusButton.Enable()
 			}
 		}
-	}(inSync)
+	}(syncRemoteAddressListener)
 	pauseFocusButton.SetIcon(icons[toPause])
 	pauseFocusButton.Resize(fyne.NewSize(30, 30))
 	return pauseFocusButton

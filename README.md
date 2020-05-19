@@ -15,6 +15,7 @@ Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyn
 <<<<<<< HEAD
 - ~~sync tomato with remote pair~~
 - disable pause button when in sync
+- ~~validate insert ip~~
 - refactoring
 - change log system
 - made tests

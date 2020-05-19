@@ -17,15 +17,17 @@ const title = "just another pomodoro"
 
 func main() {
 
+	//mainErrorListener := make(chan error)
+
 	repository, err := repository.NewPomodoroRepository()
 	if err != nil {
 		panic(err)
 	}
 
-	listener := sync.NewListener(repository)
-	listener.Start()
+	synclistener := sync.NewListener(repository)
+	synclistener.Start()
 
-	syncRemoteAddress := make(chan string)
+	syncRemoteAddressListener := make(chan string)
 	repository.Write("settings", "synkAddress", "")
 	if err != nil {
 		panic(err)
@@ -65,9 +67,9 @@ func main() {
 			layout.NewHBoxLayout(),
 			fyne.NewContainerWithLayout(
 				layout.NewVBoxLayout(),
-				container.NewProgressBarContainer(pause, alert, addPomodoro, syncRemoteAddress, repository).Container,
+				container.NewProgressBarContainer(pause, alert, addPomodoro, syncRemoteAddressListener, repository).Container,
 				NewDailyPomodoroContainer(addPomodoro, repository)),
-			container.NewButtonContainer(pause, syncRemoteAddress, pomodoroApp, repository)))
+			container.NewButtonContainer(pause, syncRemoteAddressListener, pomodoroApp, repository)))
 
 	pomodoroWindows.SetContent(mainWindowContainer)
 	pomodoroWindows.ShowAndRun()

@@ -7,10 +7,11 @@ import (
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 	"log"
+	"net"
 	"time"
 )
 
-func NewSettingsWindow(inSync chan string, pomodoroApp fyne.App, settingsRepository repository.IPomodoroRepository) fyne.Window {
+func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.App, settingsRepository repository.IPomodoroRepository) fyne.Window {
 	settings := pomodoroApp.NewWindow("Settings")
 	settings.Resize(fyne.Size{300, 50})
 	settings.CenterOnScreen()
@@ -43,7 +44,7 @@ func NewSettingsWindow(inSync chan string, pomodoroApp fyne.App, settingsReposit
 	}
 	synkInput := widget.NewFormItem("synk with", sinkEntry)
 
-	insertOk := widget.NewFormItem("", createSaveButton(timeDurationEntry, timePauseEntry, sinkEntry, settings, settingsRepository, inSync))
+	insertOk := widget.NewFormItem("", createSaveButton(timeDurationEntry, timePauseEntry, sinkEntry, settings, settingsRepository, syncRemoteAddressListener))
 
 	settingsForm := widget.NewForm(timeDurationInput, timePauseInput, timeShareInput, synkInput, insertOk)
 	settingsContainer := fyne.NewContainerWithLayout(layout.NewVBoxLayout(), settingsForm)
@@ -51,7 +52,7 @@ func NewSettingsWindow(inSync chan string, pomodoroApp fyne.App, settingsReposit
 	return settings
 }
 
-func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress *widget.Entry, settings fyne.Window, settingsRepository repository.IPomodoroRepository, inSync chan string) *widget.Button {
+func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress *widget.Entry, settings fyne.Window, settingsRepository repository.IPomodoroRepository, syncRemoteAddressListener chan string) *widget.Button {
 	return widget.NewButton("save", func() {
 		duration, err := common.StringToDuration(timeDurationEntry.Text)
 		if err != nil {
@@ -63,8 +64,11 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress *widget.Ent
 			panic(err)
 		}
 		settingsRepository.Write("settings", "pauseDuration", pauseDuration)
+		if net.ParseIP(synkAddress.Text) == nil {
+			log.Fatal(err)
+		}
 		settingsRepository.Write("settings", "synkAddress", synkAddress.Text)
-		inSync <- synkAddress.Text
+		syncRemoteAddressListener <- synkAddress.Text
 		settings.Close()
 	})
 }

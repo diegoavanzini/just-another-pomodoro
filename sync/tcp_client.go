@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+	"strings"
 )
 
 const SyncPort int = 1234
@@ -20,7 +22,16 @@ type TcpClient struct {
 }
 
 func NewTcpClient(remoteAddress string) IClient {
-	c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", remoteAddress, SyncPort))
+	split := strings.Split(remoteAddress, ":")
+	remotePort := SyncPort
+	if len(split) > 1 {
+		var err error
+		remotePort, err = strconv.Atoi(split[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", split[0], remotePort))
 	if err != nil {
 		log.Fatal(err)
 	}

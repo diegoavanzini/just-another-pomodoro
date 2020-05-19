@@ -14,7 +14,7 @@ type ProgressBarContainer struct {
 	Container *fyne.Container
 }
 
-func NewProgressBarContainer(pause, alert, addPomodoro chan bool,syncRemoteAddress chan string, pomodoroRepository repository.IPomodoroRepository) ProgressBarContainer {
+func NewProgressBarContainer(pause, alert, addPomodoro chan bool, syncRemoteAddressListener chan string, pomodoroRepository repository.IPomodoroRepository) ProgressBarContainer {
 	var timerDuration, pauseDuration time.Duration
 	err := pomodoroRepository.Read("settings", "timeDuration", &timerDuration)
 	if err != nil {
@@ -43,16 +43,16 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool,syncRemoteAddre
 		pauseProgressBar)
 
 
-	go func(syncRemoteAddress chan string) {
+	go func(syncRemoteAddressListener chan string) {
 		for {
-			remoteAddress := <-syncRemoteAddress
+			remoteAddress := <-syncRemoteAddressListener
 			if remoteAddress == "" {
 				progressBar.SetSyncClient(nil)
 			} else {
 				progressBar.SetSyncClient(sync.NewTcpClient(remoteAddress))
 			}
 		}
-	}(syncRemoteAddress)
+	}(syncRemoteAddressListener)
 
 	go func() {
 		for {
