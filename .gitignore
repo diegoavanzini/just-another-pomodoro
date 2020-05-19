@@ -1,4 +1,4 @@
 .idea
 anotherPomodoro
 *.exe
-data/settings/*.json
+data/
