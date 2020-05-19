@@ -19,7 +19,7 @@ Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyn
 - refactoring
 - change log system
 - made tests
-- manage errors
+- ~~manage errors~~
 - change storage from json to bolt(?)
 - sync tomato with github commit
 ---

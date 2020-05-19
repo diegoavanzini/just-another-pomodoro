@@ -3,6 +3,7 @@ package window
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
+	"errors"
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
@@ -65,7 +66,7 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress *widget.Ent
 		}
 		settingsRepository.Write("settings", "pauseDuration", pauseDuration)
 		if net.ParseIP(synkAddress.Text) == nil {
-			log.Fatal(err)
+			common.MainErrorListener <- errors.New("invalid remote address " + synkAddress.Text)
 		}
 		settingsRepository.Write("settings", "synkAddress", synkAddress.Text)
 		syncRemoteAddressListener <- synkAddress.Text

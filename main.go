@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/custom/container"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"bitbucket.org/avanz/anotherPomodoro/sync"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
+	"fyne.io/fyne/dialog"
 	"fyne.io/fyne/layout"
 	"github.com/gobuffalo/packr/v2"
 	"image/color"
+	"log"
 	"os"
 )
 
@@ -17,31 +20,35 @@ const title = "just another pomodoro"
 
 func main() {
 
-	//mainErrorListener := make(chan error)
-
-	repository, err := repository.NewPomodoroRepository()
-	if err != nil {
-		panic(err)
-	}
-
-	synclistener := sync.NewListener(repository)
-	synclistener.Start()
-
-	syncRemoteAddressListener := make(chan string)
-	repository.Write("settings", "synkAddress", "")
-	if err != nil {
-		panic(err)
-	}
-
 	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
 	logo, err := fyne.LoadResourceFromPath(logoBox.ResolutionDir)
 
 	pomodoroApp := app.New()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	pomodoroApp.SetIcon(logo)
 	pomodoroWindows := pomodoroApp.NewWindow(title)
+	common.MainErrorListener = make(chan error)
+	go func (mainErrorListener chan error, pomodoroApp fyne.App) {
+		for  {
+			err := <- mainErrorListener
+			if err != nil {
+				win := pomodoroApp.NewWindow("Dialogs")
+				dialog.ShowError(err, win)
+			}
+		}
+	} (common.MainErrorListener, pomodoroApp)
+
+
+	repository, err := repository.NewPomodoroRepository()
+	common.MainErrorListener <- err
+
+	synclistener := sync.NewListener(repository)
+	synclistener.Start()
+
+	syncRemoteAddressListener := make(chan string)
+	common.MainErrorListener <- repository.Write("settings", "synkAddress", "")
 
 	pause := make(chan bool, 2)
 	alert := make(chan bool)
