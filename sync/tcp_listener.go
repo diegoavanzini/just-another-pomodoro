@@ -1,11 +1,11 @@
 package sync
 
 import (
+	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 	"time"
@@ -28,14 +28,14 @@ func (l *Listener)Start() {
 	go func(listener *Listener) {
 		l, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", "127.0.0.1", SyncPort))
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 		defer l.Close()
 
 		for {
 			c, err := l.Accept()
 			if err != nil {
-				log.Fatal(err)
+				common.MainErrorListener <- err
 				return
 			}
 			go listener.handleConnection(c)
@@ -49,7 +49,7 @@ func (l *Listener) handleConnection(c net.Conn) {
 	for {
 		netData, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 
 		temp := strings.TrimSpace(string(netData))
@@ -59,17 +59,17 @@ func (l *Listener) handleConnection(c net.Conn) {
 		var currentTimerValue string
 		err = l.repository.Read("current", "timerValue", &currentTimerValue)
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 		var timeDuration = int((25 * time.Minute).Seconds())
 		err = l.repository.Read("settings", "timeDuration", &timeDuration)
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 		var pauseDuration = int((5 * time.Minute).Seconds())
 		err = l.repository.Read("settings", "pauseDuration", &pauseDuration)
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 		currentPomodoro := struct {
 			TimeDuration      int
@@ -78,7 +78,7 @@ func (l *Listener) handleConnection(c net.Conn) {
 		}{timeDuration, pauseDuration, currentTimerValue}
 		currentPomodoroJson, err := json.Marshal(currentPomodoro)
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 		c.Write([]byte(string(currentPomodoroJson) + "\n"))
 	}

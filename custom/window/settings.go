@@ -7,8 +7,8 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
-	"log"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -29,7 +29,7 @@ func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.A
 
 	IPAddressToShare, err := common.ExternalIP()
 	if err != nil {
-		log.Fatal(err)
+		common.MainErrorListener <- err
 	}
 	timeShareButton := widget.NewLabel(IPAddressToShare)
 	timeShareInput := widget.NewFormItem("share with other", timeShareButton)
@@ -65,11 +65,14 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress *widget.Ent
 			panic(err)
 		}
 		settingsRepository.Write("settings", "pauseDuration", pauseDuration)
-		if net.ParseIP(synkAddress.Text) == nil {
-			common.MainErrorListener <- errors.New("invalid remote address " + synkAddress.Text)
+		sa := strings.Split(synkAddress.Text, ":")
+		if sa[0] != "" && net.ParseIP(sa[0]) == nil {
+			common.MainErrorListener <- errors.New("invalid remote address:" + sa[0])
+			synkAddress.Text = ""
+		} else {
+			settingsRepository.Write("settings", "synkAddress", synkAddress.Text)
+			syncRemoteAddressListener <- synkAddress.Text
 		}
-		settingsRepository.Write("settings", "synkAddress", synkAddress.Text)
-		syncRemoteAddressListener <- synkAddress.Text
 		settings.Close()
 	})
 }

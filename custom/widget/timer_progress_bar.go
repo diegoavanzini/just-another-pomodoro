@@ -10,7 +10,6 @@ import (
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
 	"image/color"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -42,13 +41,13 @@ func (bar *CustomProgressBar) Start() {
 				} else {
 					currentPomodoro, err := bar.tcpClient.GetRemotePomodoro()
 					if err != nil {
-						log.Fatal(err)
+						common.MainErrorListener <- err
 					}
 					nameAndValue := strings.Split(currentPomodoro.CurrentTimerValue, "_")
 					if nameAndValue[0] == bar.name {
 						currentPomodoroValue, err := strconv.Atoi(nameAndValue[1])
 						if err != nil {
-							log.Fatal(err)
+							common.MainErrorListener <- err
 						}
 						value = time.Duration(currentPomodoroValue)
 					} else {
@@ -58,7 +57,7 @@ func (bar *CustomProgressBar) Start() {
 				bar.SetValue(value)
 				err := bar.repository.Write("current", "timerValue", fmt.Sprintf("%s_%d", bar.name, value))
 				if err != nil {
-					log.Fatal(err)
+					common.MainErrorListener <- err
 				}
 				if (value.Seconds()/bar.Max.Seconds())*100 == 1 {
 					bar.alert <- true

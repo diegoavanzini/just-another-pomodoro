@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/theme"
-	"log"
 	"time"
 )
 
@@ -55,11 +54,11 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 	for _, pString := range pomodoroList {
 		p := PomodoroStruct{}
 		if err := json.Unmarshal([]byte(pString), &p); err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 		started, err := time.Parse(layout, p.TimeStarted)
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 		pPosition := c.getPosition(started)
 		if pPosition == currentPosition && !skipInsert {
@@ -73,7 +72,7 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 			TimeDuration: int(timeDuration.Minutes()),
 		}
 		if err := c.repository.Write(workdoneToday, fmt.Sprintf("pomodoro_%d", currentPosition), pomodoroStruct); err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 	}
 }

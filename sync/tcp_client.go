@@ -1,11 +1,11 @@
 package sync
 
 import (
+	"bitbucket.org/avanz/anotherPomodoro/common"
 	models "bitbucket.org/avanz/anotherPomodoro/model"
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -18,7 +18,7 @@ type IClient interface {
 }
 
 type TcpClient struct {
-	net.Conn
+	c net.Conn
 }
 
 func NewTcpClient(remoteAddress string) IClient {
@@ -28,20 +28,21 @@ func NewTcpClient(remoteAddress string) IClient {
 		var err error
 		remotePort, err = strconv.Atoi(split[1])
 		if err != nil {
-			log.Fatal(err)
+			common.MainErrorListener <- err
 		}
 	}
 	c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", split[0], remotePort))
 	if err != nil {
-		log.Fatal(err)
+		common.MainErrorListener <- err
+		return nil
 	}
 	return &TcpClient{c}
 }
-func (c *TcpClient) GetRemotePomodoro() (models.CurrentPomodoro, error) {
-	fmt.Fprintf(c, "\n")
-	message, err := bufio.NewReader(c).ReadString('\n')
+func (tc *TcpClient) GetRemotePomodoro() (models.CurrentPomodoro, error) {
+	fmt.Fprintf(tc.c, "\n")
+	message, err := bufio.NewReader(tc.c).ReadString('\n')
 	if err != nil {
-		log.Fatal(err)
+		common.MainErrorListener <- err
 	}
 	var currentPomodoro = models.CurrentPomodoro{}
 	err = json.Unmarshal([]byte(message), &currentPomodoro)
