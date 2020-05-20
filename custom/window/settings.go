@@ -3,6 +3,7 @@ package window
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
+	"bitbucket.org/avanz/anotherPomodoro/sync"
 	"errors"
 	"fmt"
 	"fyne.io/fyne"
@@ -10,11 +11,12 @@ import (
 	"fyne.io/fyne/widget"
 	"github.com/atotto/clipboard"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 )
 
-func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.App, settingsRepository repository.IPomodoroRepository) fyne.Window {
+func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.App, settingsRepository repository.IPomodoroRepository, synclistener sync.IListener) fyne.Window {
 	settings := pomodoroApp.NewWindow("Settings")
 	settings.Resize(fyne.Size{300, 50})
 	settings.CenterOnScreen()
@@ -49,7 +51,7 @@ func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.A
 	timeShareLabel.Disable()
 
 	timeSharePort := widget.NewEntry()
-	timeSharePort.Text=timeSharePortText
+	timeSharePort.Text = timeSharePortText
 	timeShareCopy := widget.NewButton("Copy", func() {
 		timeShareText := fmt.Sprintf("%s:%s", timeShareLabel.Text, timeSharePort.Text)
 		clipboard.WriteAll(timeShareText)
@@ -69,7 +71,7 @@ func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.A
 	}
 	synkInput := widget.NewFormItem("synk with", sinkEntry)
 
-	saveButton := createSaveButton(timeDurationEntry, timePauseEntry, sinkEntry, timeShareLabel, timeSharePort, settings, settingsRepository, syncRemoteAddressListener)
+	saveButton := createSaveButton(timeDurationEntry, timePauseEntry, sinkEntry, timeShareLabel, timeSharePort, settings, settingsRepository, syncRemoteAddressListener, synclistener)
 	insertOk := widget.NewFormItem("", saveButton)
 
 	settingsForm := widget.NewForm(timeDurationInput, timePauseInput, timeShareInput, synkInput, insertOk)
@@ -78,7 +80,7 @@ func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.A
 	return settings
 }
 
-func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareLabel, timeSharePort *widget.Entry, settings fyne.Window, settingsRepository repository.IPomodoroRepository, syncRemoteAddressListener chan string) *widget.Button {
+func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareLabel, timeSharePort *widget.Entry, settings fyne.Window, settingsRepository repository.IPomodoroRepository, syncRemoteAddressListener chan string, synclistener sync.IListener) *widget.Button {
 	return widget.NewButton("save", func() {
 		duration, err := common.StringToDuration(timeDurationEntry.Text)
 		if err != nil {
@@ -93,6 +95,11 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareL
 
 		timeShareAddressAndPort := fmt.Sprintf("%s:%s", timeShareLabel.Text, timeSharePort.Text)
 		settingsRepository.Write("settings", "timeShareAddressAndPort", timeShareAddressAndPort)
+		timeSharePortInt, err := strconv.Atoi(timeSharePort.Text)
+		if err != nil {
+			common.MainErrorListener <- err
+		}
+		synclistener.ChangeAddressAndPort(timeShareLabel.Text, timeSharePortInt)
 
 		sa := strings.Split(synkAddress.Text, ":")
 		if sa[0] != "" && net.ParseIP(sa[0]) == nil {

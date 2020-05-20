@@ -78,7 +78,7 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 }
 
 func (c PomodoroDoneContainer) getPosition(started time.Time) int {
-	pPosition := started.Hour()*2
+	pPosition := started.Hour() * 2
 	if started.Minute() > 30 {
 		pPosition = pPosition + 1
 	}

@@ -42,7 +42,6 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool, syncRemoteAddr
 		progressBar,
 		pauseProgressBar)
 
-
 	go func(syncRemoteAddressListener chan string) {
 		for {
 			remoteAddress := <-syncRemoteAddressListener

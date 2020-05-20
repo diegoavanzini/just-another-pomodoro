@@ -3,6 +3,7 @@ package container
 import (
 	"bitbucket.org/avanz/anotherPomodoro/custom/window"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
+	"bitbucket.org/avanz/anotherPomodoro/sync"
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
@@ -14,17 +15,17 @@ type ButtonContainer struct {
 	Container *fyne.Container
 }
 
-func NewButtonContainer(pause chan bool, syncRemoteAddressListener chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository) *fyne.Container {
+func NewButtonContainer(pause chan bool, syncRemoteAddressListener chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository, synclistener sync.IListener) *fyne.Container {
 	buttonsContainer := fyne.NewContainerWithLayout(
 		layout.NewVBoxLayout(),
 		NewPauseButton(pause, syncRemoteAddressListener),
-		NewSettingsButton(syncRemoteAddressListener, mainApp, settingsRepository))
+		NewSettingsButton(syncRemoteAddressListener, mainApp, settingsRepository, synclistener))
 	return buttonsContainer
 }
 
-func NewSettingsButton(syncRemoteAddressListener chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository) *widget.Button {
+func NewSettingsButton(syncRemoteAddressListener chan string, mainApp fyne.App, settingsRepository repository.IPomodoroRepository, synclistener sync.IListener) *widget.Button {
 	settingsButton := widget.NewButton("Settings...", func() {
-		settingsWindow := window.NewSettingsWindow(syncRemoteAddressListener, mainApp, settingsRepository)
+		settingsWindow := window.NewSettingsWindow(syncRemoteAddressListener, mainApp, settingsRepository, synclistener)
 		settingsWindow.Show()
 		settingsWindow.RequestFocus()
 	})

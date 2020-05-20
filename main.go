@@ -19,7 +19,7 @@ const title = "just another pomodoro"
 
 func main() {
 
-	logoBox := 	packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
+	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
 	logo, err := fyne.LoadResourceFromPath(logoBox.ResolutionDir)
 
 	pomodoroApp := app.New()
@@ -36,7 +36,7 @@ func main() {
 			if err != nil {
 				errorWindows := pomodoroApp.NewWindow("Error")
 				errorWindows.Resize(fyne.NewSize(300, 50))
-				errorWindows.SetContent(fyne.NewContainerWithLayout(layout.NewVBoxLayout(),widget.NewLabel(err.Error()), widget.NewButton("close", func(){
+				errorWindows.SetContent(fyne.NewContainerWithLayout(layout.NewVBoxLayout(), widget.NewLabel(err.Error()), widget.NewButton("close", func() {
 					errorWindows.Close()
 				})))
 				errorWindows.Show()
@@ -85,7 +85,7 @@ func main() {
 				layout.NewVBoxLayout(),
 				container.NewProgressBarContainer(pause, alert, addPomodoroListener, syncRemoteAddressListener, repository).Container,
 				NewDailyPomodoroContainer(addPomodoroListener, repository)),
-			container.NewButtonContainer(pause, syncRemoteAddressListener, pomodoroApp, repository)))
+			container.NewButtonContainer(pause, syncRemoteAddressListener, pomodoroApp, repository, synclistener)))
 
 	pomodoroWindows.SetContent(mainWindowContainer)
 	pomodoroWindows.ShowAndRun()
