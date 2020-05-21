@@ -20,32 +20,16 @@ const title = "just another pomodoro"
 func main() {
 
 	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
-	logo, err := fyne.LoadResourceFromPath(logoBox.ResolutionDir)
+	logo, _ := fyne.LoadResourceFromPath(logoBox.ResolutionDir)
 
 	pomodoroApp := app.New()
-	if err != nil {
-		common.MainErrorListener <- err
-	}
 	pomodoroApp.SetIcon(logo)
 	pomodoroWindows := pomodoroApp.NewWindow(title)
 	pomodoroWindows.SetFixedSize(true)
-	common.MainErrorListener = make(chan error)
-	go func(mainErrorListener chan error, pomodoroApp fyne.App) {
-		for {
-			err := <-mainErrorListener
-			if err != nil {
-				errorWindows := pomodoroApp.NewWindow("Error")
-				errorWindows.Resize(fyne.NewSize(300, 50))
-				errorWindows.SetContent(fyne.NewContainerWithLayout(layout.NewVBoxLayout(), widget.NewLabel(err.Error()), widget.NewButton("close", func() {
-					errorWindows.Close()
-				})))
-				errorWindows.Show()
-				errorWindows.SetFixedSize(true)
-				//errorWindows.CenterOnScreen()
-				errorWindows.RequestFocus()
-			}
-		}
-	}(common.MainErrorListener, pomodoroApp)
+	pomodoroWindows.SetMaster()
+
+	initInformationWindowListener(pomodoroApp)
+	initErrorWindowListener(pomodoroApp)
 
 	repository, err := repository.NewPomodoroRepository()
 	if err != nil {
@@ -56,9 +40,9 @@ func main() {
 	synclistener.Start()
 
 	syncRemoteAddressListener := make(chan string)
-	if err != nil {
-		common.MainErrorListener <- repository.Write("settings", "synkAddress", "")
-	}
+	//if err != nil {
+	//	common.MainErrorListener <- repository.Write("settings", "synkAddress", "")
+	//}
 	pause := make(chan bool, 2)
 	alert := make(chan bool)
 	go func(pause, alert chan bool) {
@@ -89,6 +73,45 @@ func main() {
 
 	pomodoroWindows.SetContent(mainWindowContainer)
 	pomodoroWindows.ShowAndRun()
+}
+
+func initInformationWindowListener(pomodoroApp fyne.App) {
+	common.MainInfoListener = make(chan string)
+	go func(mainInformationListener chan string, pomodoroApp fyne.App) {
+		for {
+			message := <-mainInformationListener
+			if message != "" {
+				informationWindows := pomodoroApp.NewWindow("Information")
+				informationWindows.Resize(fyne.NewSize(300, 50))
+				informationWindows.SetContent(fyne.NewContainerWithLayout(layout.NewVBoxLayout(), widget.NewLabel(message), widget.NewButton("close", func() {
+					informationWindows.Close()
+				})))
+				informationWindows.Show()
+				informationWindows.SetFixedSize(true)
+				informationWindows.RequestFocus()
+			}
+		}
+	}(common.MainInfoListener, pomodoroApp)
+}
+
+func initErrorWindowListener(pomodoroApp fyne.App) {
+	common.MainErrorListener = make(chan error)
+	go func(mainErrorListener chan error, pomodoroApp fyne.App) {
+		for {
+			err := <-mainErrorListener
+			if err != nil {
+				errorWindows := pomodoroApp.NewWindow("Error")
+				errorWindows.Resize(fyne.NewSize(300, 50))
+				errorWindows.SetContent(fyne.NewContainerWithLayout(layout.NewVBoxLayout(), widget.NewLabel(err.Error()), widget.NewButton("close", func() {
+					errorWindows.Close()
+				})))
+				errorWindows.Show()
+				errorWindows.SetFixedSize(true)
+				//errorWindows.CenterOnScreen()
+				errorWindows.RequestFocus()
+			}
+		}
+	}(common.MainErrorListener, pomodoroApp)
 }
 
 func NewDailyPomodoroContainer(addPomodoro chan bool, repository repository.IPomodoroRepository) *fyne.Container {

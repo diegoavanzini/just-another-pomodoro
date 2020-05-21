@@ -16,33 +16,16 @@ type Listener struct {
 	repository    repository.IPomodoroRepository
 	sharedAddress string
 	sharedPort    int
-	stopListener  chan bool
-}
-
-func (l *Listener) Stop() {
-	l.stopListener <- true
-}
-
-func (l *Listener) ChangeAddressAndPort(address string, port int) {
-	if l.sharedAddress == address && l.sharedPort == port {
-		return
-	}
-	l.Stop()
-	l.sharedAddress = address
-	l.sharedPort = port
-	l.Start()
 }
 
 type IListener interface {
 	Start()
-	Stop()
-	ChangeAddressAndPort(address string, port int)
 }
 
 func NewListener(repository repository.IPomodoroRepository) IListener {
 	l := &Listener{repository: repository}
 	timeShareAddressAndPort := ""
-	err := repository.Read("settings", "timeShareAddressAndPort", timeShareAddressAndPort)
+	err := repository.Read("settings", "timeShareAddressAndPort", &timeShareAddressAndPort)
 	if err != nil {
 		common.MainErrorListener <- err
 	}
@@ -60,23 +43,20 @@ func NewListener(repository repository.IPomodoroRepository) IListener {
 func (l *Listener) Start() {
 	countConnection := 0
 	go func(listener *Listener) {
-		if l.sharedAddress == "" {
-			l.sharedAddress = "127.0.0.1"
+		if listener.sharedAddress == "" {
+			listener.sharedAddress = "127.0.0.1"
 		}
-		if l.sharedPort == 0 {
-			l.sharedPort = 1234
+		if listener.sharedPort == 0 {
+			listener.sharedPort = 1234
 		}
-		l, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", l.sharedAddress, l.sharedPort))
+		l, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", listener.sharedAddress, listener.sharedPort))
 		if err != nil {
 			common.MainErrorListener <- err
+			return
 		}
 		defer l.Close()
 
 		for {
-			select {
-			case <-listener.stopListener:
-				break
-			}
 			c, err := l.Accept()
 			if err != nil {
 				common.MainErrorListener <- err
@@ -96,8 +76,7 @@ func (l *Listener) handleConnection(c net.Conn) {
 			common.MainErrorListener <- err
 		}
 
-		temp := strings.TrimSpace(string(netData))
-
+		temp := strings.TrimSpace(netData)
 		if temp == "STOP" {
 			break
 		}

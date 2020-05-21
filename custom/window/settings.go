@@ -11,7 +11,6 @@ import (
 	"fyne.io/fyne/widget"
 	"github.com/atotto/clipboard"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -19,7 +18,6 @@ import (
 func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.App, settingsRepository repository.IPomodoroRepository, synclistener sync.IListener) fyne.Window {
 	settings := pomodoroApp.NewWindow("Settings")
 	settings.Resize(fyne.Size{300, 50})
-	settings.CenterOnScreen()
 
 	timeDurationEntry := widget.NewEntry()
 	timeDurationString := initTimeDuration("timeDuration", 25*time.Minute, settingsRepository)
@@ -95,11 +93,12 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareL
 
 		timeShareAddressAndPort := fmt.Sprintf("%s:%s", timeShareLabel.Text, timeSharePort.Text)
 		settingsRepository.Write("settings", "timeShareAddressAndPort", timeShareAddressAndPort)
-		timeSharePortInt, err := strconv.Atoi(timeSharePort.Text)
-		if err != nil {
-			common.MainErrorListener <- err
-		}
-		synclistener.ChangeAddressAndPort(timeShareLabel.Text, timeSharePortInt)
+		common.MainInfoListener <- "this changes will be effective restarting pomodoro."
+		//timeSharePortInt, err := strconv.Atoi(timeSharePort.Text)
+		//if err != nil {
+		//	common.MainErrorListener <- err
+		//}
+		//synclistener.ChangeAddressAndPort(timeShareLabel.Text, timeSharePortInt)
 
 		sa := strings.Split(synkAddress.Text, ":")
 		if sa[0] != "" && net.ParseIP(sa[0]) == nil {

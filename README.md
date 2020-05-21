@@ -13,7 +13,7 @@ Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyn
     4. stop at every pomodoro
     5. insert comment on every pomodoro
 - ~~sync tomato with remote pair~~
-- add possibility to change listerener port
+- ~~add possibility to change listerener port~~
 - disable pause button when in sync
 - ~~validate insert ip~~
 - ~~manage errors~~
