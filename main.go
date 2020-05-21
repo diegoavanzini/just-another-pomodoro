@@ -31,10 +31,11 @@ func main() {
 	initInformationWindowListener(pomodoroApp)
 	initErrorWindowListener(pomodoroApp)
 
-	repository, err := repository.NewPomodoroRepository()
+	repository, err := repository.NewBoltPomodoroRepository()
 	if err != nil {
 		common.MainErrorListener <- err
 	}
+	defer repository.Close()
 
 	synclistener := sync.NewListener(repository)
 	synclistener.Start()

@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
-	"github.com/gobuffalo/packr/v2"
+	packr "github.com/gobuffalo/packr/v2"
 	"os"
 )
 

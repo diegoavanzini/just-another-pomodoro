@@ -4,7 +4,10 @@ go 1.14
 
 require (
 	fyne.io/fyne v1.2.4
+	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
 	github.com/atotto/clipboard v0.1.2
+	github.com/boltdb/bolt v1.3.1
+	github.com/cheikhshift/db v0.5.0
 	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/jcelliott/lumber v0.0.0-20160324203708-dd349441af25 // indirect
@@ -19,4 +22,5 @@ require (
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a // indirect
 	golang.org/x/sys v0.0.0-20200513112337-417ce2331b5c // indirect
 	golang.org/x/tools v0.0.0-20200513201620-d5fe73897c97 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
 )
