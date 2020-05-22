@@ -1,52 +1,23 @@
 package repository
 
 import (
+	models "bitbucket.org/avanz/anotherPomodoro/model"
 	"encoding/json"
 	"fmt"
 	"github.com/boltdb/bolt"
 	packr "github.com/gobuffalo/packr/v2"
-	scribble "github.com/nanobox-io/golang-scribble"
 	"log"
 	"os"
 )
 
 type IPomodoroRepository interface {
-	Write(collection, resource string, v interface{}) error
-	Read(collection, resource string, v interface{}) error
-	ReadAll(s string) ([]string, error)
+	Write(collection, key string, value interface{}) error
+	Read(collection, key string, value interface{}) error
+	ReadAll(collection, filter string) ([]string, error)
 	Close()
 }
 
-type pomodoroRepository struct {
-	data *scribble.Driver
-}
-
-func (p pomodoroRepository) Close() {
-}
-
-func (p pomodoroRepository) ReadAll(s string) ([]string, error) {
-	return p.data.ReadAll(s)
-}
-
-func (p pomodoroRepository) Write(collection, resource string, v interface{}) error {
-	return p.data.Write(collection, resource, v)
-}
-
-func (p pomodoroRepository) Read(collection, resource string, v interface{}) error {
-	return p.data.Read(collection, resource, v)
-}
-
-func NewPomodoroRepository() (IPomodoroRepository, error) {
-	dataFolder := packr.New("data", "../data")
-	var err error
-	data, err := scribble.New(dataFolder.ResolutionDir, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &pomodoroRepository{
-		data: data,
-	}, nil
-}
+const DB = "pomodoro"
 
 type boltRepository struct {
 	data *bolt.DB
@@ -62,7 +33,7 @@ func (br boltRepository) Write(collection, resource string, v interface{}) error
 		return fmt.Errorf("could not marshal %s json: %v", collection, err)
 	}
 	err = br.data.Update(func(tx *bolt.Tx) error {
-		err = tx.Bucket([]byte("pomodoro")).Bucket([]byte(collection)).Put([]byte(resource), confBytes)
+		err = tx.Bucket([]byte(DB)).Bucket([]byte(collection)).Put([]byte(resource), confBytes)
 		if err != nil {
 			return fmt.Errorf("could not set %s: %v", collection, err)
 		}
@@ -74,20 +45,26 @@ func (br boltRepository) Write(collection, resource string, v interface{}) error
 
 func (br boltRepository) Read(collection, resource string, v interface{}) error {
 	err := br.data.View(func(tx *bolt.Tx) error {
-		v = tx.Bucket([]byte("pomodoro")).Bucket([]byte(collection)).Get([]byte(resource))
-		//fmt.Printf("Config: %s\n", v)
+		v = tx.Bucket([]byte(DB)).Bucket([]byte(collection)).Get([]byte(resource))
 		return nil
 	})
+	fmt.Printf("collection:resource %s\n", v)
 	return err
 }
 
-func (br boltRepository) ReadAll(collection string) ([]string, error) {
+func (br boltRepository) ReadAll(collection, filter string) ([]string, error) {
 	ret := []string{}
 	err := br.data.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("pomodoro")).Bucket([]byte(collection))
+		b := tx.Bucket([]byte(DB)).Bucket([]byte(collection))
 		b.ForEach(func(k, v []byte) error {
-			//fmt.Println(string(k), string(v))
-			ret = append(ret, string(v))
+			pomodoro := models.PomodoroPosition{}
+			if err := json.Unmarshal(v, &pomodoro); err != nil {
+				return err
+			}
+			if pomodoro.TimeStarted.Format("20060102") == filter {
+				//fmt.Println(string(k), string(v))
+				ret = append(ret, string(v))
+			}
 			return nil
 		})
 		return nil
@@ -131,5 +108,3 @@ func NewBoltPomodoroRepository() (IPomodoroRepository, error) {
 		data: db,
 	}, nil
 }
-
-

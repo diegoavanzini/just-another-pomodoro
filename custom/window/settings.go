@@ -94,11 +94,6 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareL
 		timeShareAddressAndPort := fmt.Sprintf("%s:%s", timeShareLabel.Text, timeSharePort.Text)
 		settingsRepository.Write("settings", "timeShareAddressAndPort", timeShareAddressAndPort)
 		common.MainInfoListener <- "this changes will be effective restarting pomodoro."
-		//timeSharePortInt, err := strconv.Atoi(timeSharePort.Text)
-		//if err != nil {
-		//	common.MainErrorListener <- err
-		//}
-		//synclistener.ChangeAddressAndPort(timeShareLabel.Text, timeSharePortInt)
 
 		sa := strings.Split(synkAddress.Text, ":")
 		if sa[0] != "" && net.ParseIP(sa[0]) == nil {

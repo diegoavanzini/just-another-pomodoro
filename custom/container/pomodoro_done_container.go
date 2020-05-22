@@ -3,9 +3,9 @@ package container
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/custom/widget"
+	models "bitbucket.org/avanz/anotherPomodoro/model"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"encoding/json"
-	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/theme"
 	"time"
@@ -28,11 +28,6 @@ func NewPomodoroDoneContainer(boxLayout fyne.Layout, repository repository.IPomo
 	return container
 }
 
-type PomodoroStruct struct {
-	TimeStarted  string
-	TimeDuration int
-}
-
 func (c PomodoroDoneContainer) AddPomodoro() {
 	timeDuration := 25 * time.Minute
 	err := c.repository.Read("settings", "timeDuration", &timeDuration)
@@ -45,21 +40,18 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 		panic(err)
 	}
 
-	workdoneToday := "workdone" + time.Now().Format("20060102")
-	pomodoroList, _ := c.repository.ReadAll(workdoneToday)
-	layout := "02-01-2006 15:04"
+	workdoneToday := time.Now().Format("20060102")
+	pomodoroList, _ := c.repository.ReadAll("workdone", workdoneToday)
+	//layout := "02-01-2006 15:04"
 	started := time.Now().UTC()
 	currentPosition := c.getPosition(started)
 	skipInsert := false
 	for _, pString := range pomodoroList {
-		p := PomodoroStruct{}
+		p := models.PomodoroPosition{}
 		if err := json.Unmarshal([]byte(pString), &p); err != nil {
 			common.MainErrorListener <- err
 		}
-		started, err := time.Parse(layout, p.TimeStarted)
-		if err != nil {
-			common.MainErrorListener <- err
-		}
+		started := p.TimeStarted
 		pPosition := c.getPosition(started)
 		if pPosition == currentPosition && !skipInsert {
 			skipInsert = true
@@ -67,11 +59,12 @@ func (c PomodoroDoneContainer) AddPomodoro() {
 		c.Objects[pPosition] = widget.NewPomodoro(5, common.Green)
 	}
 	if !skipInsert {
-		pomodoroStruct := PomodoroStruct{
-			TimeStarted:  started.Format(layout),
-			TimeDuration: int(timeDuration.Minutes()),
+		pomodoroStruct := models.PomodoroPosition{
+			TimeStarted:     started,
+			TimeDuration:    int(timeDuration.Minutes()),
+			CurrentPosition: currentPosition,
 		}
-		if err := c.repository.Write(workdoneToday, fmt.Sprintf("pomodoro_%d", currentPosition), pomodoroStruct); err != nil {
+		if err := c.repository.Write("workdone", workdoneToday, pomodoroStruct); err != nil {
 			common.MainErrorListener <- err
 		}
 	}
