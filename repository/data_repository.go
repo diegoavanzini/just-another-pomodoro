@@ -45,8 +45,9 @@ func (br boltRepository) Write(collection, resource string, v interface{}) error
 
 func (br boltRepository) Read(collection, resource string, v interface{}) error {
 	err := br.data.View(func(tx *bolt.Tx) error {
-		v = tx.Bucket([]byte(DB)).Bucket([]byte(collection)).Get([]byte(resource))
-		return nil
+		value := tx.Bucket([]byte(DB)).Bucket([]byte(collection)).Get([]byte(resource))
+		err := json.Unmarshal(value, v)
+		return err
 	})
 	fmt.Printf("collection:resource:value %s:%s:%s\n", collection, resource, v)
 	return err
