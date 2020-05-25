@@ -69,7 +69,6 @@ func (l *Listener) Start() {
 }
 
 func (l *Listener) handleConnection(c net.Conn) {
-	fmt.Print(".")
 	for {
 		netData, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {

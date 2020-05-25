@@ -1,4 +1,8 @@
-Just Another Pomodoro made with [Go](https://golang.org/) and [fyne](https://fyne.io/) toolkit
+Just Another Pomodoro made with [Go](https://golang.org/), [fyne](https://fyne.io/) toolkit, with [boltdb](https://github.com/boltdb/bolt)
+
+```sh
+go install -ldflags -H=windowsgui
+```
 
 ### TODO
 - ~~gestire la pausa del pomodoro~~

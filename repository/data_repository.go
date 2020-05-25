@@ -46,10 +46,12 @@ func (br boltRepository) Write(collection, resource string, v interface{}) error
 func (br boltRepository) Read(collection, resource string, v interface{}) error {
 	err := br.data.View(func(tx *bolt.Tx) error {
 		value := tx.Bucket([]byte(DB)).Bucket([]byte(collection)).Get([]byte(resource))
-		err := json.Unmarshal(value, v)
+		var err error
+		if value != nil && string(value) != "" {
+			err = json.Unmarshal(value, v)
+		}
 		return err
 	})
-	fmt.Printf("collection:resource:value %s:%s:%s\n", collection, resource, v)
 	return err
 }
 
@@ -103,7 +105,6 @@ func NewBoltPomodoroRepository() (IPomodoroRepository, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not set up buckets, %v", err)
 	}
-	fmt.Println("DB Setup Done")
 
 	return &boltRepository{
 		data: db,

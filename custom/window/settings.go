@@ -69,7 +69,7 @@ func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.A
 	}
 	synkInput := widget.NewFormItem("synk with", sinkEntry)
 
-	saveButton := createSaveButton(timeDurationEntry, timePauseEntry, sinkEntry, timeShareLabel, timeSharePort, settings, settingsRepository, syncRemoteAddressListener, synclistener)
+	saveButton := createSaveButton(timeDurationEntry, timePauseEntry, sinkEntry, timeShareLabel, timeSharePort, settings, settingsRepository, syncRemoteAddressListener)
 	insertOk := widget.NewFormItem("", saveButton)
 
 	settingsForm := widget.NewForm(timeDurationInput, timePauseInput, timeShareInput, synkInput, insertOk)
@@ -78,7 +78,7 @@ func NewSettingsWindow(syncRemoteAddressListener chan string, pomodoroApp fyne.A
 	return settings
 }
 
-func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareLabel, timeSharePort *widget.Entry, settings fyne.Window, settingsRepository repository.IPomodoroRepository, syncRemoteAddressListener chan string, synclistener sync.IListener) *widget.Button {
+func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareLabel, timeSharePort *widget.Entry, settings fyne.Window, settingsRepository repository.IPomodoroRepository, syncRemoteAddressListener chan string) *widget.Button {
 	return widget.NewButton("save", func() {
 		duration, err := common.StringToDuration(timeDurationEntry.Text)
 		if err != nil {
