@@ -41,10 +41,8 @@ func main() {
 	synclistener.Start()
 
 	syncRemoteAddressListener := make(chan string)
-	//if err != nil {
-	//	common.MainErrorListener <- repository.Write("settings", "synkAddress", "")
-	//}
 	pause := make(chan bool, 2)
+
 	alert := make(chan bool)
 	go func(pause, alert chan bool) {
 		for {

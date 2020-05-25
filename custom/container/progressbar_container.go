@@ -55,6 +55,7 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool, syncRemoteAddr
 
 	go func() {
 		for {
+			<- pause
 			pauseProgressBar.SetValue(pauseDuration)
 			progressBar.Start()
 			pauseProgressBar.Start()

@@ -46,12 +46,12 @@ func NewPauseButton(pause chan bool, syncRemoteAddressListener chan string) *wid
 	icons := map[bool]fyne.Resource{false: startIcon, true: pauseIcon}
 
 	var pauseFocusButton *widget.Button
-	toPause := true
+	started := false
 	pauseFocusButton = widget.NewButton("", func() {
-		pause <- toPause
-		pause <- toPause
-		toPause = !toPause
-		pauseFocusButton.SetIcon(icons[toPause])
+		pause <- started
+		pause <- started
+		started = !started
+		pauseFocusButton.SetIcon(icons[started])
 	})
 
 	go func(syncRemoteAddressListener chan string) {
@@ -63,7 +63,7 @@ func NewPauseButton(pause chan bool, syncRemoteAddressListener chan string) *wid
 			}
 		}
 	}(syncRemoteAddressListener)
-	pauseFocusButton.SetIcon(icons[toPause])
+	pauseFocusButton.SetIcon(icons[started])
 	pauseFocusButton.Resize(fyne.NewSize(30, 30))
 	return pauseFocusButton
 }
