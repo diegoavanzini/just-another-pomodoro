@@ -5,19 +5,38 @@ import (
 	"bitbucket.org/avanz/anotherPomodoro/custom/container"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"bitbucket.org/avanz/anotherPomodoro/sync"
+	"bitbucket.org/avanz/anotherPomodoro/timer"
+	"flag"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 	packr "github.com/gobuffalo/packr/v2"
+	"golang.org/x/tools/go/ssa/interp/testdata/src/fmt"
 	"image/color"
 	"os"
+	"time"
 )
 
 const title = "just another pomodoro"
 
 func main() {
+
+	// read input
+	cPtr := *flag.Bool("cmd", true, "command line timer")
+	flag.Parse()
+	// if -c run only timer
+	if cPtr {
+		//run timer
+		pause := make(chan bool)
+		stop := make(chan bool)
+		pt := timer.NewPomodoroTimer(25*time.Minute, pause, stop)
+		pt.StartTimer(func(value time.Duration){
+			fmt.Print("-", value)
+		})
+		return
+	}
 
 	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
 	logo, _ := fyne.LoadResourceFromPath(logoBox.ResolutionDir)

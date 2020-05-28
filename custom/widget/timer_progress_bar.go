@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"bitbucket.org/avanz/anotherPomodoro/sync"
+	"bitbucket.org/avanz/anotherPomodoro/timer"
 	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
@@ -26,49 +27,48 @@ type CustomProgressBar struct {
 }
 
 func (bar *CustomProgressBar) Start() {
-	ticker := time.NewTicker(1 * time.Second)
-	value := bar.Max
-	func() {
-		for {
-			select {
-			case p := <-bar.pause:
-				if p {
-					<-bar.pause
-				}
-			case <-ticker.C:
-				if bar.tcpClient == nil {
-					value -= 1 * time.Second
-				} else {
-					currentPomodoro, err := bar.tcpClient.GetRemotePomodoro()
-					if err != nil {
-						common.MainErrorListener <- err
-					}
-					nameAndValue := strings.Split(currentPomodoro.CurrentTimerValue, "_")
-					if nameAndValue[0] == bar.name {
-						currentPomodoroValue, err := strconv.Atoi(nameAndValue[1])
-						if err != nil {
-							common.MainErrorListener <- err
-						}
-						value = time.Duration(currentPomodoroValue)
-					} else {
-						return
-					}
-				}
-				bar.SetValue(value)
-				err := bar.repository.Write("current", "timerValue", fmt.Sprintf("%s_%d", bar.name, value))
-				if err != nil {
-					common.MainErrorListener <- err
-				}
-				if (value.Seconds()/bar.Max.Seconds())*100 == 1 {
-					bar.alert <- true
-				}
-				if value <= bar.Min {
-					ticker.Stop()
-					return
-				}
-			}
+
+	stopListener := make(chan bool)
+	pt := timer.NewPomodoroTimer(bar.Max, bar.pause, stopListener)
+	pt.StartTimer(bar.doSomething)
+	for {
+		value := <-pt.TimerValueListener
+		bar.Value = value
+		err := bar.repository.Write("current", "timerValue", fmt.Sprintf("%s_%d", bar.name, value))
+		if err != nil {
+			common.MainErrorListener <- err
 		}
-	}()
+		if (value.Seconds()/bar.Max.Seconds())*100 == 1 {
+			bar.alert <- true
+		}
+		if value <= bar.Min {
+			//ticker.Stop()
+			stopListener <- true
+			return
+		}
+	}
+}
+
+func (bar *CustomProgressBar) doSomething(value time.Duration) {
+	if bar.tcpClient == nil {
+		value -= 1 * time.Second
+	} else {
+		currentPomodoro, err := bar.tcpClient.GetRemotePomodoro()
+		if err != nil {
+			common.MainErrorListener <- err
+		}
+		nameAndValue := strings.Split(currentPomodoro.CurrentTimerValue, "_")
+		if nameAndValue[0] == bar.name {
+			currentPomodoroValue, err := strconv.Atoi(nameAndValue[1])
+			if err != nil {
+				common.MainErrorListener <- err
+			}
+			value = time.Duration(currentPomodoroValue)
+		} else {
+			return
+		}
+	}
+	return
 }
 
 func NewTimerProgressBar(maxDuration time.Duration, pause, alert chan bool, bgColor color.Color, repository repository.IPomodoroRepository, name string) *CustomProgressBar {
