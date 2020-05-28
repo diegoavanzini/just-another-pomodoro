@@ -31,10 +31,12 @@ func (pt *PomodoroTimer) StartTimer(doSomething func(value time.Duration)) {
 			case <-pt.stopListener:
 				return
 			case <-ticker.C:
+				value -= 1 * time.Second
+				if value < 0 {
+					return
+				}
 				doSomething(value)
-				pt.TimerValueListener <- value
 			}
 		}
 	}()
 }
-

@@ -12,8 +12,8 @@ import (
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
+	pb "github.com/cheggaaa/pb/v3"
 	packr "github.com/gobuffalo/packr/v2"
-	"golang.org/x/tools/go/ssa/interp/testdata/src/fmt"
 	"image/color"
 	"os"
 	"time"
@@ -28,13 +28,26 @@ func main() {
 	flag.Parse()
 	// if -c run only timer
 	if cPtr {
-		//run timer
+		count := 25*time.Minute
+
+		tmpl := `{{ red "ddd" }} {{ bar . "<" "=" (cycle . "-" "|" "-" "|" ) "." ">"}} {{speed . | rndcolor }} {{percent .}} {{string . "my_green_string" | green}} {{string . "my_blue_string" | blue}}`
+		// start bar based on our template
+		bar := pb.ProgressBarTemplate(tmpl).Start64(25)
+		// set values for string elements
+		bar.Set("my_green_string", "green").
+			Set("my_blue_string", "blue")
+
+		// start bar from 'simple' template
+		//bar = pb.Full.Start(int(count.Seconds()))
+		bar.SetRefreshRate(time.Second)
+
 		pause := make(chan bool)
 		stop := make(chan bool)
-		pt := timer.NewPomodoroTimer(25*time.Minute, pause, stop)
+		pt := timer.NewPomodoroTimer(count, pause, stop)
 		pt.StartTimer(func(value time.Duration){
-			fmt.Print("-", value)
+			bar.Increment()
 		})
+		bar.Finish()
 		return
 	}
 
