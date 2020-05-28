@@ -6,14 +6,17 @@ import (
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"bitbucket.org/avanz/anotherPomodoro/sync"
 	"bitbucket.org/avanz/anotherPomodoro/timer"
+	"bufio"
 	"flag"
+	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
-	pb "github.com/cheggaaa/pb/v3"
 	packr "github.com/gobuffalo/packr/v2"
+	"github.com/superhawk610/bar"
+	"github.com/ttacon/chalk"
 	"image/color"
 	"os"
 	"time"
@@ -28,26 +31,54 @@ func main() {
 	flag.Parse()
 	// if -c run only timer
 	if cPtr {
-		count := 25*time.Minute
+		count := 25 * time.Minute.Seconds()
 
-		tmpl := `{{ red "ddd" }} {{ bar . "<" "=" (cycle . "-" "|" "-" "|" ) "." ">"}} {{speed . | rndcolor }} {{percent .}} {{string . "my_green_string" | green}} {{string . "my_blue_string" | blue}}`
-		// start bar based on our template
-		bar := pb.ProgressBarTemplate(tmpl).Start64(25)
-		// set values for string elements
-		bar.Set("my_green_string", "green").
-			Set("my_blue_string", "blue")
-
-		// start bar from 'simple' template
-		//bar = pb.Full.Start(int(count.Seconds()))
-		bar.SetRefreshRate(time.Second)
+		b := bar.NewWithOpts(
+			bar.WithDimensions(int(count), 50),
+			bar.WithFormat(fmt.Sprintf(
+				"%s:remain ( :percent) :bar %s ",
+				chalk.Green,
+				chalk.Reset,
+			)),
+			bar.WithDisplay("[", "█", "█", " ", "]"))
 
 		pause := make(chan bool)
-		stop := make(chan bool)
-		pt := timer.NewPomodoroTimer(count, pause, stop)
-		pt.StartTimer(func(value time.Duration){
-			bar.Increment()
-		})
-		bar.Finish()
+
+		go func(pause chan bool) {
+			for {
+				pt := timer.NewPomodoroTimer(25 * time.Minute, pause)
+				pt.StartTimer(func(value time.Duration) {
+					b.TickAndUpdate(bar.Context{
+						bar.Ctx("remain", common.DurationToString(value))})
+				})
+				b.Done()
+
+				pauseTimer := timer.NewPomodoroTimer(5 * time.Minute, pause)
+				pauseTimer.StartTimer(func(value time.Duration) {
+					b.TickAndUpdate(bar.Context{
+						bar.Ctx("remain", common.DurationToString(value))})
+				})
+				b.Done()
+			}
+		}(pause)
+
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Println("tab to pause: ")
+		var paused bool
+		for {
+			var oneChar [1]byte
+ 			_, err := reader.Read(oneChar[:])
+			const ETX = '\x03' // ^C
+			const EOT = '\x04' // ^D
+			if err != nil || oneChar[0] == ETX || oneChar[0] == EOT {
+				return
+			}
+			if oneChar[0] == ' ' {
+				fmt.Println("paused!\r")
+				pause <- !paused
+				paused = !paused
+			}
+		}
 		return
 	}
 

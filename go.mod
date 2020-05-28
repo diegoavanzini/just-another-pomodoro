@@ -11,5 +11,9 @@ require (
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-tty v0.0.3 // indirect
+	github.com/superhawk610/bar v0.0.0-20190614064228-4fbf44d086fd
+	github.com/superhawk610/terminal v0.0.0-20200123193603-cbc69427a94a // indirect
+	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31
 	golang.org/x/tools v0.0.0-20200527183253-8e7acdbce89d
 )

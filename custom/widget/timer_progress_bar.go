@@ -29,7 +29,7 @@ type CustomProgressBar struct {
 func (bar *CustomProgressBar) Start() {
 
 	stopListener := make(chan bool)
-	pt := timer.NewPomodoroTimer(bar.Max, bar.pause, stopListener)
+	pt := timer.NewPomodoroTimer(bar.Max, bar.pause)
 	pt.StartTimer(bar.doSomething)
 	for {
 		value := <-pt.TimerValueListener
