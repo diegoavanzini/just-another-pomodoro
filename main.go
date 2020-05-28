@@ -63,7 +63,7 @@ func main() {
 		}(pause)
 
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Println("tab to pause: ")
+		//fmt.Println("tab to pause: ")
 		var paused bool
 		for {
 			var oneChar [1]byte
@@ -74,7 +74,9 @@ func main() {
 				return
 			}
 			if oneChar[0] == ' ' {
-				fmt.Println("paused!\r")
+				if !paused {
+					fmt.Println("paused!\r")
+				}
 				pause <- !paused
 				paused = !paused
 			}
