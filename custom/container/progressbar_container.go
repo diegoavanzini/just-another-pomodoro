@@ -31,7 +31,10 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool, syncRemoteAddr
 		}
 	}
 
-	pomodoroRepository.Write("settings", "synkAddress", "") // reset synk remote
+	err = pomodoroRepository.Write("settings", "synkAddress", "") // reset synk remote
+	if err != nil {
+		panic(err)
+	}
 
 	progressBar := custom_widget.NewTimerProgressBar(timerDuration, pause, alert, common.Yellow, pomodoroRepository, "timer")
 	progressBar.Resize(fyne.NewSize(220, 5))
@@ -54,8 +57,8 @@ func NewProgressBarContainer(pause, alert, addPomodoro chan bool, syncRemoteAddr
 	}(syncRemoteAddressListener)
 
 	go func() {
+		<- pause
 		for {
-			<- pause
 			pauseProgressBar.SetValue(pauseDuration)
 			progressBar.Start()
 			pauseProgressBar.Start()

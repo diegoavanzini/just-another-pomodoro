@@ -71,9 +71,9 @@ func (l *Listener) Start() {
 func (l *Listener) handleConnection(c net.Conn) {
 	for {
 		netData, err := bufio.NewReader(c).ReadString('\n')
-		if err != nil {
-			common.MainErrorListener <- err
-		}
+		//if err != nil {
+		//	common.MainErrorListener <- err
+		//}
 
 		temp := strings.TrimSpace(netData)
 		if temp == "STOP" {

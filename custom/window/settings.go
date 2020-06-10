@@ -84,15 +84,24 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareL
 		if err != nil {
 			panic(err)
 		}
-		settingsRepository.Write("settings", "timeDuration", duration)
+		err = settingsRepository.Write("settings", "timeDuration", duration)
+		if err != nil {
+			panic(err)
+		}
 		pauseDuration, err := common.StringToDuration(timePauseEntry.Text)
 		if err != nil {
 			panic(err)
 		}
-		settingsRepository.Write("settings", "pauseDuration", pauseDuration)
+		err = settingsRepository.Write("settings", "pauseDuration", pauseDuration)
+		if err != nil {
+			panic(err)
+		}
 
 		timeShareAddressAndPort := fmt.Sprintf("%s:%s", timeShareLabel.Text, timeSharePort.Text)
-		settingsRepository.Write("settings", "timeShareAddressAndPort", timeShareAddressAndPort)
+		err = settingsRepository.Write("settings", "timeShareAddressAndPort", timeShareAddressAndPort)
+		if err != nil {
+			panic(err)
+		}
 		common.MainInfoListener <- "this changes will be effective restarting pomodoro."
 
 		sa := strings.Split(synkAddress.Text, ":")
@@ -100,7 +109,10 @@ func createSaveButton(timeDurationEntry, timePauseEntry, synkAddress, timeShareL
 			common.MainErrorListener <- errors.New("invalid remote address:" + sa[0])
 			synkAddress.Text = ""
 		} else {
-			settingsRepository.Write("settings", "synkAddress", synkAddress.Text)
+			err = settingsRepository.Write("settings", "synkAddress", synkAddress.Text)
+			if err != nil {
+				panic(err)
+			}
 			syncRemoteAddressListener <- synkAddress.Text
 		}
 		settings.Close()

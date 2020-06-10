@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/boltdb/bolt"
-	packr "github.com/gobuffalo/packr/v2"
 	"log"
 	"os"
 )
@@ -14,13 +13,12 @@ type IPomodoroRepository interface {
 	Write(collection, key string, value interface{}) error
 	Read(collection, key string, value interface{}) error
 	ReadAll(collection, filter string) ([]string, error)
+	Delete(collection string) error
 	Close()
 }
 
-const DB = "pomodoro"
-
 type boltRepository struct {
-	data *bolt.DB
+	data   *bolt.DB
 }
 
 func (br boltRepository) Close() {
@@ -33,7 +31,7 @@ func (br boltRepository) Write(collection, resource string, v interface{}) error
 		return fmt.Errorf("could not marshal %s json: %v", collection, err)
 	}
 	err = br.data.Update(func(tx *bolt.Tx) error {
-		err = tx.Bucket([]byte(DB)).Bucket([]byte(collection)).Put([]byte(resource), confBytes)
+		err = tx.Bucket([]byte(dbname)).Bucket([]byte(collection)).Put([]byte(resource), confBytes)
 		if err != nil {
 			return fmt.Errorf("could not set %s: %v", collection, err)
 		}
@@ -45,7 +43,7 @@ func (br boltRepository) Write(collection, resource string, v interface{}) error
 
 func (br boltRepository) Read(collection, resource string, v interface{}) error {
 	err := br.data.View(func(tx *bolt.Tx) error {
-		value := tx.Bucket([]byte(DB)).Bucket([]byte(collection)).Get([]byte(resource))
+		value := tx.Bucket([]byte(dbname)).Bucket([]byte(collection)).Get([]byte(resource))
 		var err error
 		if value != nil && string(value) != "" {
 			err = json.Unmarshal(value, v)
@@ -55,10 +53,20 @@ func (br boltRepository) Read(collection, resource string, v interface{}) error 
 	return err
 }
 
+func (br boltRepository) Delete(collection string) error {
+	err := br.data.View(func(tx *bolt.Tx) error {
+		err := tx.Bucket([]byte(dbname)).DeleteBucket([]byte(collection))
+		return err
+	})
+	return err
+}
+
+const dbname  = "anotherPomodoro"
+
 func (br boltRepository) ReadAll(collection, filter string) ([]string, error) {
 	ret := []string{}
 	err := br.data.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(DB)).Bucket([]byte(collection))
+		b := tx.Bucket([]byte(dbname)).Bucket([]byte(collection))
 		b.ForEach(func(k, v []byte) error {
 			pomodoro := models.PomodoroPosition{}
 			if err := json.Unmarshal(v, &pomodoro); err != nil {
@@ -78,13 +86,13 @@ func (br boltRepository) ReadAll(collection, filter string) ([]string, error) {
 func NewBoltPomodoroRepository() (IPomodoroRepository, error) {
 	// Open the my.db data file in your current directory.
 	// It will be created if it doesn't exist.
-	dataFolder := packr.New("data", "../data")
-	db, err := bolt.Open(dataFolder.ResolutionDir+string(os.PathSeparator)+"pomodoro.db", 0600, nil)
+
+	db, err := bolt.Open("."+string(os.PathSeparator)+dbname+".db", 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		root, err := tx.CreateBucketIfNotExists([]byte("pomodoro"))
+		root, err := tx.CreateBucketIfNotExists([]byte(dbname))
 		if err != nil {
 			return fmt.Errorf("could not create pomodoro bucket: %v", err)
 		}
@@ -107,6 +115,6 @@ func NewBoltPomodoroRepository() (IPomodoroRepository, error) {
 	}
 
 	return &boltRepository{
-		data: db,
+		data:   db,
 	}, nil
 }

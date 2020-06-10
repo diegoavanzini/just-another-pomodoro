@@ -2,13 +2,13 @@ package container
 
 import (
 	"bitbucket.org/avanz/anotherPomodoro/custom/window"
+	imgpause "bitbucket.org/avanz/anotherPomodoro/img/pause"
+	imgstart "bitbucket.org/avanz/anotherPomodoro/img/start"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"bitbucket.org/avanz/anotherPomodoro/sync"
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
-	packr "github.com/gobuffalo/packr/v2"
-	"os"
 )
 
 type ButtonContainer struct {
@@ -35,14 +35,18 @@ func NewSettingsButton(syncRemoteAddressListener chan string, mainApp fyne.App, 
 
 func NewPauseButton(pause chan bool, syncRemoteAddressListener chan string) *widget.Button {
 	var err error
-	startIcon, err := fyne.LoadResourceFromPath(packr.New("start", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"start.png").ResolutionDir)
+	imgStart, err := imgstart.Asset("img/start/start.png")
 	if err != nil {
 		panic(err)
 	}
-	pauseIcon, err := fyne.LoadResourceFromPath(packr.New("pause", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"pause.png").ResolutionDir)
+	startIcon := fyne.NewStaticResource("start", imgStart)
+
+	imgPause, err := imgpause.Asset("img/pause/pause.png")
 	if err != nil {
 		panic(err)
 	}
+	pauseIcon := fyne.NewStaticResource("pause", imgPause)
+
 	icons := map[bool]fyne.Resource{false: startIcon, true: pauseIcon}
 
 	var pauseFocusButton *widget.Button

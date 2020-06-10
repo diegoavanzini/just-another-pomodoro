@@ -3,65 +3,34 @@ package main
 import (
 	"bitbucket.org/avanz/anotherPomodoro/common"
 	"bitbucket.org/avanz/anotherPomodoro/custom/container"
+	"bitbucket.org/avanz/anotherPomodoro/img/icon"
 	"bitbucket.org/avanz/anotherPomodoro/repository"
 	"bitbucket.org/avanz/anotherPomodoro/sync"
-	"bitbucket.org/avanz/anotherPomodoro/timer"
-	"flag"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
-	pb "github.com/cheggaaa/pb/v3"
-	packr "github.com/gobuffalo/packr/v2"
 	"image/color"
-	"os"
-	"time"
 )
 
 const title = "just another pomodoro"
 
 func main() {
 
-	// read input
-	cPtr := *flag.Bool("cmd", true, "command line timer")
-	flag.Parse()
-	// if -c run only timer
-	if cPtr {
-		count := 25*time.Minute
-
-		tmpl := `{{ red "ddd" }} {{ bar . "<" "=" (cycle . "-" "|" "-" "|" ) "." ">"}} {{speed . | rndcolor }} {{percent .}} {{string . "my_green_string" | green}} {{string . "my_blue_string" | blue}}`
-		// start bar based on our template
-		bar := pb.ProgressBarTemplate(tmpl).Start64(25)
-		// set values for string elements
-		bar.Set("my_green_string", "green").
-			Set("my_blue_string", "blue")
-
-		// start bar from 'simple' template
-		//bar = pb.Full.Start(int(count.Seconds()))
-		bar.SetRefreshRate(time.Second)
-
-		pause := make(chan bool)
-		stop := make(chan bool)
-		pt := timer.NewPomodoroTimer(count, pause, stop)
-		pt.StartTimer(func(value time.Duration){
-			bar.Increment()
-		})
-		bar.Finish()
-		return
-	}
-
-	logoBox := packr.New("logo", "."+string(os.PathSeparator)+"img"+string(os.PathSeparator)+"jap_logo.png")
-	logo, _ := fyne.LoadResourceFromPath(logoBox.ResolutionDir)
-
 	pomodoroApp := app.New()
-	pomodoroApp.SetIcon(logo)
-	pomodoroWindows := pomodoroApp.NewWindow(title)
-	pomodoroWindows.SetFixedSize(true)
-	pomodoroWindows.SetMaster()
 
 	initInformationWindowListener(pomodoroApp)
 	initErrorWindowListener(pomodoroApp)
+
+	pomodoroWindows := pomodoroApp.NewWindow(title)
+	iconImg, err := icon.Asset("img/icon/Icon.png")
+	if err != nil {
+		common.MainErrorListener <- err
+	}
+	pomodoroWindows.SetIcon(fyne.NewStaticResource("icon", iconImg))
+	pomodoroWindows.SetFixedSize(true)
+	pomodoroWindows.SetMaster()
 
 	repository, err := repository.NewBoltPomodoroRepository()
 	if err != nil {

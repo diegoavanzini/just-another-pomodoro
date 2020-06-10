@@ -5,16 +5,15 @@ import (
 )
 
 type PomodoroTimer struct {
-	maxValue                    time.Duration
-	pauseListener, stopListener chan bool
-	TimerValueListener          chan time.Duration
+	maxValue           time.Duration
+	pauseListener      chan bool
+	TimerValueListener chan time.Duration
 }
 
-func NewPomodoroTimer(maxValue time.Duration, pauseListener, stopListener chan bool) PomodoroTimer {
+func NewPomodoroTimer(maxValue time.Duration, pauseListener chan bool) PomodoroTimer {
 	return PomodoroTimer{
 		maxValue:      maxValue,
 		pauseListener: pauseListener,
-		stopListener:  stopListener,
 	}
 }
 
@@ -28,10 +27,8 @@ func (pt *PomodoroTimer) StartTimer(doSomething func(value time.Duration)) {
 				if p {
 					<-pt.pauseListener
 				}
-			case <-pt.stopListener:
-				return
 			case <-ticker.C:
-				value -= 1 * time.Second
+ 				value -= 1 * time.Second
 				if value < 0 {
 					return
 				}

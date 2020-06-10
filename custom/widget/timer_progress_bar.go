@@ -27,13 +27,16 @@ type CustomProgressBar struct {
 }
 
 func (bar *CustomProgressBar) Start() {
+	pt := timer.NewPomodoroTimer(bar.Max, bar.pause)
+	pt.StartTimer(bar.updateValue)
+}
 
-	stopListener := make(chan bool)
-	pt := timer.NewPomodoroTimer(bar.Max, bar.pause, stopListener)
-	pt.StartTimer(bar.doSomething)
-	for {
-		value := <-pt.TimerValueListener
-		bar.Value = value
+func (bar *CustomProgressBar) updateValue(value time.Duration) {
+	if bar.tcpClient == nil {
+		value -= 1 * time.Second
+		//bar.Value = value
+		bar.SetValue(value)
+
 		err := bar.repository.Write("current", "timerValue", fmt.Sprintf("%s_%d", bar.name, value))
 		if err != nil {
 			common.MainErrorListener <- err
@@ -43,15 +46,10 @@ func (bar *CustomProgressBar) Start() {
 		}
 		if value <= bar.Min {
 			//ticker.Stop()
-			stopListener <- true
+			//bar.stopListener <- true
 			return
 		}
-	}
-}
 
-func (bar *CustomProgressBar) doSomething(value time.Duration) {
-	if bar.tcpClient == nil {
-		value -= 1 * time.Second
 	} else {
 		currentPomodoro, err := bar.tcpClient.GetRemotePomodoro()
 		if err != nil {
